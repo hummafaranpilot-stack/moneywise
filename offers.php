@@ -21,7 +21,7 @@ require_login();
     padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 13.5px;
   }
   .offers-cards-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px;
   }
 
   /* Offer card — same visual system as the Muneeb Data tool's Offers tab */
@@ -71,7 +71,9 @@ require_login();
   .ofc-restrict { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; }
   .ofc-restrict.empty { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
 
-  .ofc-actions { display: flex; gap: 4px; position: absolute; top: 12px; right: 12px; }
+  .ofc-controls { display: flex; align-items: center; justify-content: space-between; }
+  .ofc-controls-left { display: flex; align-items: center; gap: 10px; }
+  .ofc-actions { display: flex; gap: 4px; flex-shrink: 0; }
   .ofc-actions button { background: rgba(255,255,255,0.95); border: 1px solid #e2e8f0; cursor: pointer; padding: 6px; border-radius: 7px; color: #64748b; }
   .ofc-actions button:hover { background: #eff6ff; color: #16a34a; border-color: #93c5fd; }
   .ofc-actions button.del:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
@@ -328,11 +330,6 @@ function renderCard(o, groupBadge) {
   const disabled = o.enabled === false;
   return `
     <div class="offer-card${disabled ? ' offer-disabled' : ''}">
-      <div class="ofc-actions">
-        <button onclick="showMoneyWiseLink('${esc(o.id)}')" title="View MoneyWise Link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
-        <button onclick="editOffer('${esc(o.id)}')" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-        <button class="del" onclick="deleteOffer('${esc(o.id)}')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
-      </div>
       <div class="ofc-head">
         <div class="ofc-logo" style="background:${accent};">${esc(initials)}</div>
         <div style="flex:1;min-width:0;">
@@ -340,8 +337,17 @@ function renderCard(o, groupBadge) {
           ${o.network ? '<div class="ofc-sub">' + esc(o.network) + '</div>' : ''}
         </div>
         <button class="ofc-payout">${esc(o.payout || 'Set CPA')}</button>
-        <button class="ofc-toggle${disabled ? '' : ' on'}" onclick="toggleOfferEnabled('${esc(o.id)}')" title="${disabled ? 'Disabled — click to enable' : 'Enabled — click to disable'}"><span class="ofc-toggle-knob"></span></button>
-        <button class="ofc-star${o.priority ? ' on' : ''}" onclick="toggleOfferPriority('${esc(o.id)}')" title="${o.priority ? 'Remove from Priority' : 'Mark as Priority'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+      </div>
+      <div class="ofc-controls">
+        <div class="ofc-controls-left">
+          <button class="ofc-toggle${disabled ? '' : ' on'}" onclick="toggleOfferEnabled('${esc(o.id)}')" title="${disabled ? 'Disabled — click to enable' : 'Enabled — click to disable'}"><span class="ofc-toggle-knob"></span></button>
+          <button class="ofc-star${o.priority ? ' on' : ''}" onclick="toggleOfferPriority('${esc(o.id)}')" title="${o.priority ? 'Remove from Priority' : 'Mark as Priority'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+        </div>
+        <div class="ofc-actions">
+          <button onclick="showMoneyWiseLink('${esc(o.id)}')" title="View MoneyWise Link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+          <button onclick="editOffer('${esc(o.id)}')" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="del" onclick="deleteOffer('${esc(o.id)}')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
+        </div>
       </div>
       <div class="ofc-body">
         ${(o.conversionRate || o.internalName) ? '<div class="ofc-meta">' + (o.conversionRate ? '<span class="ofc-cr">CR ' + esc(o.conversionRate) + '</span>' : '') + (o.internalName ? '<span class="ofc-internal">' + esc(o.internalName) + '</span>' : '') + '</div>' : ''}
