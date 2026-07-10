@@ -18,13 +18,39 @@ function client_ip() {
     return $_SERVER['REMOTE_ADDR'] ?? '';
 }
 
+// Sticky-session proxies (NodeMaven/IPRoyal) often reuse the same exit IP
+// across many clicks in a short window — cache geo results per IP for 5 min
+// so those hits skip the slow external ip-api.com round-trip entirely.
+define('GEO_CACHE_FILE', __DIR__ . '/data/geo-cache.json');
+define('GEO_CACHE_TTL', 300); // seconds
+
+function geo_cache_get($ip) {
+    $all = db_read('geo-cache.json', []);
+    $hit = $all[$ip] ?? null;
+    if (!$hit || $hit['expiresAt'] < time()) return null;
+    return $hit['geo'];
+}
+
+function geo_cache_set($ip, $geo) {
+    $all = db_read('geo-cache.json', []);
+    // Prune expired entries so the file doesn't grow forever.
+    $now = time();
+    foreach ($all as $k => $v) { if ($v['expiresAt'] < $now) unset($all[$k]); }
+    $all[$ip] = ['geo' => $geo, 'expiresAt' => $now + GEO_CACHE_TTL];
+    db_write('geo-cache.json', $all);
+}
+
 function geo_lookup($ip) {
+    $cached = geo_cache_get($ip);
+    if ($cached !== null) return $cached;
+
     $url = 'http://ip-api.com/json/' . urlencode($ip) . '?fields=status,message,country,countryCode,regionName,city,zip,query';
-    $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+    $ctx = stream_context_create(['http' => ['timeout' => 3]]);
     $body = @file_get_contents($url, false, $ctx);
     if ($body === false) return null;
     $j = json_decode($body, true);
     if (!$j || ($j['status'] ?? '') !== 'success') return null;
+    geo_cache_set($ip, $j);
     return $j;
 }
 
