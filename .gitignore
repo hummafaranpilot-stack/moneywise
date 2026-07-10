@@ -1,2 +1,4 @@
 node_modules/
-clicks-log.json
+data/clicks-log.json
+data/offers.json
+data/offers-map.json
