@@ -20,16 +20,15 @@ require_login();
     background: #16a34a; color: #fff; border: none; font-weight: 700;
     padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 13.5px;
   }
-  /* Flexbox, not grid — so an incomplete last row (e.g. 2 leftover cards)
-     stretches to fill the full row width instead of leaving empty columns. */
+  /* Fixed 5-column grid — incomplete rows (e.g. only 1 card in a section)
+     just leave the remaining columns blank instead of stretching to fill. */
   .offers-cards-grid {
-    display: flex; flex-wrap: wrap; gap: 16px;
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;
   }
-  .offer-card { flex: 1 1 calc(20% - 13px); } /* ~5 per row */
-  @media (max-width: 1400px) { .offer-card { flex-basis: calc(25% - 12px); } } /* ~4 per row */
-  @media (max-width: 1100px) { .offer-card { flex-basis: calc(33.333% - 11px); } } /* ~3 per row */
-  @media (max-width: 800px)  { .offer-card { flex-basis: calc(50% - 8px); } } /* ~2 per row */
-  @media (max-width: 520px)  { .offer-card { flex-basis: 100%; } }
+  @media (max-width: 1400px) { .offers-cards-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 1100px) { .offers-cards-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 800px)  { .offers-cards-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px)  { .offers-cards-grid { grid-template-columns: 1fr; } }
 
   /* Offer card — same visual system as the Muneeb Data tool's Offers tab */
   .offer-card {
