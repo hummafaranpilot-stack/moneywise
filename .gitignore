@@ -2,3 +2,4 @@ node_modules/
 data/clicks-log.json
 data/offers.json
 data/offers-map.json
+data/geo-cache.json
