@@ -54,6 +54,7 @@ no_cache_headers();
   .ofc-body { display: flex; flex-direction: column; gap: 10px; flex: 1; }
   .ofc-meta { display: flex; gap: 8px; flex-wrap: wrap; }
   .ofc-cr { background: #eff6ff; color: #1e40af; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .ofc-cap { background: #fdf4ff; color: #86198f; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
   .ofc-internal { font-size: 11px; color: #64748b; font-style: italic; }
 
   .ofc-section {
@@ -186,6 +187,10 @@ no_cache_headers();
         <label class="field-label" for="of-cr">Conversion Rate (CR)</label>
         <input id="of-cr" type="text" placeholder="6-12%+">
       </div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="of-cap">Weekly Cap <span class="hint">(max sales/week for this offer — Monday to Sunday)</span></label>
+      <input id="of-cap" type="number" min="0" placeholder="e.g. 5">
     </div>
     <div class="field">
       <label class="field-label" for="of-account">Account Name</label>
@@ -360,7 +365,7 @@ function renderCard(o, groupBadge) {
         </div>
       </div>
       <div class="ofc-body">
-        ${(o.conversionRate || o.internalName) ? '<div class="ofc-meta">' + (o.conversionRate ? '<span class="ofc-cr">CR ' + esc(o.conversionRate) + '</span>' : '') + (o.internalName ? '<span class="ofc-internal">' + esc(o.internalName) + '</span>' : '') + '</div>' : ''}
+        ${(o.conversionRate || o.internalName || o.cap != null) ? '<div class="ofc-meta">' + (o.conversionRate ? '<span class="ofc-cr">CR ' + esc(o.conversionRate) + '</span>' : '') + (o.cap != null ? '<span class="ofc-cap">Cap ' + esc(o.cap) + '/week</span>' : '') + (o.internalName ? '<span class="ofc-internal">' + esc(o.internalName) + '</span>' : '') + '</div>' : ''}
         <div class="ofc-section">
           <div class="ofc-section-k">Identity</div>
           <div class="ofc-identity">
@@ -400,6 +405,7 @@ function openOfferModal(offer) {
   $('of-internal-name').value = offer ? (offer.internalName || '') : '';
   $('of-payout').value = offer ? (offer.payout || '') : '';
   $('of-cr').value = offer ? (offer.conversionRate || '') : '';
+  $('of-cap').value = offer && offer.cap != null ? offer.cap : '';
   $('of-account').value = offer ? (offer.account || '') : '';
   $('of-account-email').value = offer ? (offer.accountEmail || '') : '';
   $('of-account-telegram').value = offer ? (offer.accountTelegram || '') : '';
@@ -428,6 +434,7 @@ async function submitOfferForm() {
     internalName: $('of-internal-name').value.trim(),
     payout: $('of-payout').value.trim(),
     conversionRate: $('of-cr').value.trim(),
+    cap: $('of-cap').value.trim() === '' ? null : parseInt($('of-cap').value, 10),
     account: $('of-account').value.trim(),
     accountEmail: $('of-account-email').value.trim(),
     accountTelegram: $('of-account-telegram').value.trim().replace(/^@/, ''),

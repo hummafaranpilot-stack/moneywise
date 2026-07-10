@@ -47,6 +47,7 @@ if ($action === 'create') {
         'payout' => $body['payout'] ?? '',
         'conversionRate' => $body['conversionRate'] ?? '',
         'internalName' => $body['internalName'] ?? '',
+        'cap' => $body['cap'] ?? null,
         'restrictions' => $body['restrictions'] ?? [],
         'color' => $body['color'] ?? '#64748b',
         'createdAt' => gmdate('c'),
