@@ -31,7 +31,8 @@ require_login();
   /* Offer card — same visual system as the Muneeb Data tool's Offers tab */
   .offer-card {
     position: relative; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
-    padding: 16px; display: flex; flex-direction: column; gap: 12px; height: 100%;
+    padding: 16px; display: flex; flex-direction: column; gap: 12px;
+    height: 100%; min-height: 320px;
   }
   .ofc-head { display: flex; align-items: flex-start; gap: 10px; }
   .ofc-logo {
