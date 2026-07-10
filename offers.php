@@ -14,15 +14,19 @@ require_login();
     background: #f8fafc; color: #0f172a;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
-  .topbar { max-width: 1200px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar { max-width: 1800px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: space-between; }
   .brand { font-size: 22px; font-weight: 800; color: #16a34a; }
   .btn-add {
     background: #16a34a; color: #fff; border: none; font-weight: 700;
     padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 13.5px;
   }
   .offers-cards-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px;
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;
   }
+  @media (max-width: 1400px) { .offers-cards-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 1100px) { .offers-cards-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 800px)  { .offers-cards-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px)  { .offers-cards-grid { grid-template-columns: 1fr; } }
 
   /* Offer card — same visual system as the Muneeb Data tool's Offers tab */
   .offer-card {
@@ -80,7 +84,7 @@ require_login();
   .ofc-actions svg { width: 13px; height: 13px; }
 
   /* Sections (Priority / Today / This Week / This Month / Older) */
-  .offers-section { max-width: 1200px; margin: 0 auto 22px; }
+  .offers-section { max-width: 1800px; margin: 0 auto 22px; }
   .offers-section-head {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 16px; margin-bottom: 10px;
@@ -126,7 +130,7 @@ require_login();
   .btn-secondary { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 9px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
   .btn-primary { background: #16a34a; color: #fff; border: none; padding: 9px 18px; border-radius: 8px; cursor: pointer; font-weight: 700; }
 
-  .empty { text-align: center; padding: 60px; color: #94a3b8; grid-column: 1 / -1; }
+  .grid-empty-msg { text-align: center; padding: 60px; color: #94a3b8; }
 </style>
 </head>
 <body>
@@ -136,7 +140,7 @@ require_login();
   <button class="btn-add" onclick="openOfferModal()">+ Add Offer</button>
 </div>
 
-<div id="grid" style="max-width:1200px;margin:0 auto;"></div>
+<div id="grid" style="max-width:1800px;margin:0 auto;"></div>
 
 <!-- ADD/EDIT MODAL -->
 <div class="modal-back" id="offer-modal" onclick="if(event.target===this) closeOfferModal()">
@@ -266,7 +270,7 @@ const STAR_ICON = '<span class="offers-section-star"><svg viewBox="0 0 24 24" fi
 function render() {
   const grid = $('grid');
   if (!_offersCache.length) {
-    grid.innerHTML = '<div class="empty">No offers yet — click "+ Add Offer" to create one.</div>';
+    grid.innerHTML = '<div class="grid-empty-msg">No offers yet — click "+ Add Offer" to create one.</div>';
     return;
   }
 
