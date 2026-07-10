@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/includes/auth.php';
+require_login();
+?>
 <!doctype html>
 <html>
 <head>
@@ -86,7 +90,7 @@ function applyPreset(name) {
     const y = new Date(today); y.setDate(y.getDate() - 1);
     document.getElementById('from').value = _ymd(y);
     document.getElementById('to').value   = _ymd(y);
-  } else { // all
+  } else {
     document.getElementById('from').value = '';
     document.getElementById('to').value   = '';
   }
@@ -106,11 +110,11 @@ async function loadStats() {
   if (to)   qs.set('to', to);
 
   try {
-    const r = await fetch('/api/stats?' + qs.toString());
+    const r = await fetch('stats-api.php?' + qs.toString());
     const data = await r.json();
     render(data);
   } catch (e) {
-    document.getElementById('tableWrap').innerHTML = '<div class="empty">Could not load stats — is the MoneyWise server running?</div>';
+    document.getElementById('tableWrap').innerHTML = '<div class="empty">Could not load stats.</div>';
   }
 }
 

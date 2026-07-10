@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# Existing files/folders (offers.php, stats.php, login.php, assets, etc.) serve as-is.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Any single path segment like /nuubu or /lulutox_dr_cash routes to index.php?offer=<id>
+RewriteRule ^([a-zA-Z0-9_-]+)$ index.php?offer=$1 [L,QSA]
