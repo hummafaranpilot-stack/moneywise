@@ -31,7 +31,7 @@ require_login();
   /* Offer card — same visual system as the Muneeb Data tool's Offers tab */
   .offer-card {
     position: relative; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
-    padding: 16px; display: flex; flex-direction: column; gap: 12px;
+    padding: 16px; display: flex; flex-direction: column; gap: 12px; height: 100%;
   }
   .ofc-head { display: flex; align-items: flex-start; gap: 10px; }
   .ofc-logo {
@@ -45,7 +45,7 @@ require_login();
     background: #16a34a; color: #fff; border: none; font-weight: 700;
     padding: 5px 12px; border-radius: 999px; font-size: 12.5px; cursor: pointer; align-self: flex-start;
   }
-  .ofc-body { display: flex; flex-direction: column; gap: 10px; }
+  .ofc-body { display: flex; flex-direction: column; gap: 10px; flex: 1; }
   .ofc-meta { display: flex; gap: 8px; flex-wrap: wrap; }
   .ofc-cr { background: #eff6ff; color: #1e40af; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
   .ofc-internal { font-size: 11px; color: #64748b; font-style: italic; }
@@ -71,7 +71,7 @@ require_login();
   .ofc-mw-copy.dest { border-color: #fcd34d; color: #92400e; }
   .ofc-mw-copy svg { width: 13px; height: 13px; }
 
-  .ofc-restrictions { display: flex; flex-wrap: wrap; gap: 4px; }
+  .ofc-restrictions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
   .ofc-restrict { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; }
   .ofc-restrict.empty { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
 
