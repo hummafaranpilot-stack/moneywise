@@ -37,4 +37,9 @@ foreach ($offers as $o) {
     $totals['redirected'] += $o['redirected'];
 }
 
-echo json_encode(['offers' => $offers, 'totals' => $totals]);
+// Raw click log, newest first, for the detail table (city/state/zip per click).
+$recent = array_values($filtered);
+usort($recent, fn($a, $b) => strcmp($b['ts'], $a['ts']));
+$recent = array_slice($recent, 0, 200);
+
+echo json_encode(['offers' => $offers, 'totals' => $totals, 'clicks' => $recent]);

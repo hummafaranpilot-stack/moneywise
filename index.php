@@ -19,7 +19,7 @@ function client_ip() {
 }
 
 function geo_lookup($ip) {
-    $url = 'http://ip-api.com/json/' . urlencode($ip) . '?fields=status,message,country,countryCode,regionName,city,query';
+    $url = 'http://ip-api.com/json/' . urlencode($ip) . '?fields=status,message,country,countryCode,regionName,city,zip,query';
     $ctx = stream_context_create(['http' => ['timeout' => 5]]);
     $body = @file_get_contents($url, false, $ctx);
     if ($body === false) return null;
@@ -107,7 +107,7 @@ $dest = $map[$offerId] ?? null;
 $ip = client_ip();
 
 if (!$dest) {
-    append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => null, 'region' => null, 'city' => null, 'valid' => false, 'redirected' => false, 'reason' => 'offer-not-found']);
+    append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => null, 'region' => null, 'city' => null, 'zip' => null, 'valid' => false, 'redirected' => false, 'reason' => 'offer-not-found']);
     http_response_code(404);
     header('Content-Type: text/plain');
     echo 'Offer not found: ' . $offerId;
@@ -120,7 +120,7 @@ $isUs = $geo && ($geo['countryCode'] ?? '') === 'US';
 if (!$isUs) {
     append_click([
         'ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip,
-        'country' => $geo['country'] ?? null, 'region' => $geo['regionName'] ?? null, 'city' => $geo['city'] ?? null,
+        'country' => $geo['country'] ?? null, 'region' => $geo['regionName'] ?? null, 'city' => $geo['city'] ?? null, 'zip' => $geo['zip'] ?? null,
         'valid' => false, 'redirected' => false, 'reason' => $geo ? 'non-us-ip' : 'geo-lookup-failed',
     ]);
     header('Content-Type: text/html');
@@ -140,7 +140,7 @@ $host = $parts['host'] ?? '';
 $path = $parts['path'] ?? '';
 $finalUrl = $scheme . '://' . $host . $path . ($query ? '?' . $query : '');
 
-append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => $geo['country'], 'region' => $geo['regionName'], 'city' => $geo['city'], 'valid' => true, 'redirected' => true, 'reason' => null]);
+append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => $geo['country'], 'region' => $geo['regionName'], 'city' => $geo['city'], 'zip' => $geo['zip'] ?? null, 'valid' => true, 'redirected' => true, 'reason' => null]);
 
 header('Content-Type: text/html');
 render_redirecting($finalUrl, $geo['city'], $geo['regionName']);

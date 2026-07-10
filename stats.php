@@ -74,6 +74,11 @@ no_cache_headers();
   <div id="tableWrap">
     <div class="empty">Loading…</div>
   </div>
+
+  <div class="sub" style="margin-top:32px;margin-bottom:8px;">Recent Clicks — per-click location detail (latest 200)</div>
+  <div id="clicksTableWrap">
+    <div class="empty">Loading…</div>
+  </div>
 </div>
 
 <script>
@@ -115,9 +120,42 @@ async function loadStats() {
     const r = await fetch('stats-api.php?' + qs.toString());
     const data = await r.json();
     render(data);
+    renderClicks(data.clicks || []);
   } catch (e) {
     document.getElementById('tableWrap').innerHTML = '<div class="empty">Could not load stats.</div>';
+    document.getElementById('clicksTableWrap').innerHTML = '<div class="empty">Could not load clicks.</div>';
   }
+}
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderClicks(clicks) {
+  const wrap = document.getElementById('clicksTableWrap');
+  const rows = clicks.map(c => {
+    const statusBadge = c.redirected
+      ? '<span style="color:#4ade80;">✓ Redirected</span>'
+      : '<span style="color:#f87171;">✗ ' + esc(c.reason || 'blocked') + '</span>';
+    const time = new Date(c.ts).toLocaleString();
+    return `
+      <tr>
+        <td>${esc(time)}</td>
+        <td>${esc(c.offerId)}</td>
+        <td>${esc(c.ip)}</td>
+        <td>${esc(c.city)}</td>
+        <td>${esc(c.region)}</td>
+        <td>${esc(c.zip)}</td>
+        <td>${statusBadge}</td>
+      </tr>
+    `;
+  }).join('');
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr><th>Time</th><th>Offer</th><th>IP</th><th>City</th><th>State</th><th>Zip</th><th>Status</th></tr>
+      </thead>
+      <tbody>${rows || '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:24px;">No clicks recorded yet for this range.</td></tr>'}</tbody>
+    </table>
+  `;
 }
 
 function render(data) {
