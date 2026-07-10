@@ -161,7 +161,7 @@ const server = http.createServer((req, res) => {
 
   if (u.pathname === '/health') return jsonResp(res, 200, { ok: true });
 
-  if (u.pathname === '/stats') {
+  if (u.pathname === '/stats' || u.pathname === '/stats.html') {
     try {
       const html = fs.readFileSync(STATS_HTML, 'utf8');
       res.writeHead(200, { 'Content-Type': 'text/html' });

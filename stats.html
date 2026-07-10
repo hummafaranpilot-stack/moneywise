@@ -28,6 +28,9 @@
     padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 13px;
   }
   button.ghost { background: transparent; border: 1px solid #253046; color: #e6ebf5; font-weight: 600; }
+  button.preset { background: transparent; border: 1px solid #253046; color: #94a3b8; font-weight: 600; padding: 9px 16px; }
+  button.preset.active { background: #16a34a; border-color: #16a34a; color: #06210f; }
+  .presets { display: flex; gap: 8px; margin-bottom: 14px; }
   table { width: 100%; border-collapse: collapse; background: #121a2b; border-radius: 12px; overflow: hidden; }
   th, td { padding: 12px 16px; text-align: left; font-size: 13.5px; }
   th { background: #0f1626; color: #94a3b8; font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
@@ -44,24 +47,56 @@
   <div class="brand">MoneyWise — Statistics</div>
   <div class="sub">Click, validation, and redirect counts per offer.</div>
 
+  <div class="presets" id="presets">
+    <button class="preset" data-preset="today" onclick="applyPreset('today')">Today</button>
+    <button class="preset" data-preset="yesterday" onclick="applyPreset('yesterday')">Yesterday</button>
+    <button class="preset" data-preset="all" onclick="applyPreset('all')">All Time</button>
+  </div>
+
   <div class="filters">
     <div class="field">
       <label for="from">From</label>
-      <input id="from" type="date">
+      <input id="from" type="date" onchange="clearPresetHighlight();loadStats()">
     </div>
     <div class="field">
       <label for="to">To</label>
-      <input id="to" type="date">
+      <input id="to" type="date" onchange="clearPresetHighlight();loadStats()">
     </div>
-    <button onclick="loadStats()">Apply</button>
-    <button class="ghost" onclick="clearFilters()">Clear</button>
+    <button onclick="clearPresetHighlight();loadStats()">Apply</button>
   </div>
 
-  <div id="tableWrap"></div>
+  <div id="tableWrap">
+    <div class="empty">Loading…</div>
+  </div>
 </div>
 
 <script>
 function fmtPct(n, d) { return d > 0 ? ((n / d) * 100).toFixed(1) + '%' : '—'; }
+
+function _ymd(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function applyPreset(name) {
+  const today = new Date();
+  if (name === 'today') {
+    document.getElementById('from').value = _ymd(today);
+    document.getElementById('to').value   = _ymd(today);
+  } else if (name === 'yesterday') {
+    const y = new Date(today); y.setDate(y.getDate() - 1);
+    document.getElementById('from').value = _ymd(y);
+    document.getElementById('to').value   = _ymd(y);
+  } else { // all
+    document.getElementById('from').value = '';
+    document.getElementById('to').value   = '';
+  }
+  document.querySelectorAll('#presets .preset').forEach(b => b.classList.toggle('active', b.dataset.preset === name));
+  loadStats();
+}
+
+function clearPresetHighlight() {
+  document.querySelectorAll('#presets .preset').forEach(b => b.classList.remove('active'));
+}
 
 async function loadStats() {
   const from = document.getElementById('from').value;
@@ -70,24 +105,18 @@ async function loadStats() {
   if (from) qs.set('from', from);
   if (to)   qs.set('to', to);
 
-  const r = await fetch('/api/stats?' + qs.toString());
-  const data = await r.json();
-  render(data);
-}
-
-function clearFilters() {
-  document.getElementById('from').value = '';
-  document.getElementById('to').value = '';
-  loadStats();
+  try {
+    const r = await fetch('/api/stats?' + qs.toString());
+    const data = await r.json();
+    render(data);
+  } catch (e) {
+    document.getElementById('tableWrap').innerHTML = '<div class="empty">Could not load stats — is the MoneyWise server running?</div>';
+  }
 }
 
 function render(data) {
   const wrap = document.getElementById('tableWrap');
-  if (!data.offers.length) {
-    wrap.innerHTML = '<div class="empty">No clicks recorded yet for this range.</div>';
-    return;
-  }
-  let rows = data.offers.map(o => `
+  const rows = (data.offers || []).map(o => `
     <tr>
       <td>${o.offerId}</td>
       <td class="num">${o.total}</td>
@@ -95,20 +124,21 @@ function render(data) {
       <td class="num">${o.redirected}<span class="cr">${fmtPct(o.redirected, o.total)}</span></td>
     </tr>
   `).join('');
+  const totals = data.totals || { total: 0, valid: 0, redirected: 0 };
   wrap.innerHTML = `
     <table>
       <thead>
         <tr><th>Offer</th><th>Total Clicks</th><th>Valid (US)</th><th>Redirected</th></tr>
       </thead>
-      <tbody>${rows}</tbody>
+      <tbody>${rows || '<tr><td colspan="4" style="text-align:center;color:#64748b;padding:24px;">No clicks recorded yet for this range.</td></tr>'}</tbody>
       <tfoot>
-        <tr><td>Total</td><td class="num">${data.totals.total}</td><td class="num">${data.totals.valid}</td><td class="num">${data.totals.redirected}</td></tr>
+        <tr><td>Total</td><td class="num">${totals.total}</td><td class="num">${totals.valid}</td><td class="num">${totals.redirected}</td></tr>
       </tfoot>
     </table>
   `;
 }
 
-loadStats();
+applyPreset('today');
 </script>
 </body>
 </html>
