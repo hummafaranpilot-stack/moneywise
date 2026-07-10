@@ -131,7 +131,7 @@ no_cache_headers();
   .field-label { display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px; }
   .field-label .req { color: #ef4444; }
   .field-label .hint { font-weight: 400; color: #94a3b8; font-size: 11px; }
-  .field input { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; }
+  .field input, .field select { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; background: #fff; }
   .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
   .btn-secondary { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 9px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
@@ -170,8 +170,11 @@ no_cache_headers();
     </div>
     <div class="row-2">
       <div class="field">
-        <label class="field-label" for="of-network">Network</label>
-        <input id="of-network" type="text" placeholder="e.g. Dr.Cash SNP">
+        <label class="field-label" for="of-network-pick">Network <span class="hint">(auto-fills account / trackers)</span></label>
+        <select id="of-network-pick" onchange="onOfferNetworkPick()">
+          <option value="">— select network —</option>
+        </select>
+        <input id="of-network" type="hidden">
       </div>
       <div class="field">
         <label class="field-label" for="of-internal-name">Internal / Display Name</label>
@@ -258,7 +261,41 @@ no_cache_headers();
 <script>
 const MONEYWISE_DOMAIN = 'https://moneywise2026.com';
 let _offersCache = [];
+let _networksCache = [];
 let _editingOfferId = null;
+
+async function _populateOfferNetworkPicker(selectedName) {
+  const sel = $('of-network-pick');
+  if (!sel) return;
+  try {
+    const r = await fetch('networks-api.php');
+    _networksCache = r.ok ? await r.json() : [];
+    if (!_networksCache.length) {
+      sel.innerHTML = '<option value="">— no networks yet — ask to add one —</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">— select network —</option>'
+      + _networksCache.map(n => '<option value="' + esc(n.id) + '">'
+          + esc(n.name) + (n.identity ? ' · ' + esc(n.identity) : '') + '</option>').join('');
+    if (selectedName) {
+      const match = _networksCache.find(n => (n.name || '').toLowerCase() === selectedName.toLowerCase());
+      if (match) sel.value = match.id;
+    }
+  } catch (_) { /* ignore */ }
+}
+
+function onOfferNetworkPick() {
+  const id = $('of-network-pick').value;
+  if (!id) return;
+  const n = _networksCache.find(x => x.id === id);
+  if (!n) return;
+  $('of-network').value          = n.name || '';
+  $('of-account').value          = n.identity || '';
+  $('of-account-email').value    = n.email || '';
+  $('of-account-telegram').value = (n.telegram || '').replace(/^@/, '');
+  if (n.ourTracker)   $('of-tracker').value = n.ourTracker;
+  if (n.ownerTracker) $('of-offer-tracker').value = n.ownerTracker;
+}
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function $(id) { return document.getElementById(id); }
@@ -397,6 +434,7 @@ function renderCard(o, groupBadge) {
 function openOfferModal(offer) {
   _editingOfferId = offer ? offer.id : null;
   $('offer-modal-title').textContent = offer ? 'Edit Offer' : 'Add Offer';
+  _populateOfferNetworkPicker(offer && offer.network);
   $('of-name').value = offer ? (offer.name || '') : '';
   $('of-id').value = offer ? (offer.id || '') : '';
   $('of-id').readOnly = !!offer;
