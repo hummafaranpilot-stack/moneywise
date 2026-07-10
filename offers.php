@@ -11,6 +11,7 @@ no_cache_headers();
 <title>MoneyWise — Offers</title>
 <style>
   * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
   body {
     margin: 0; min-height: 100vh; padding: 32px 24px;
     background: #f8fafc; color: #0f172a;
@@ -36,7 +37,7 @@ no_cache_headers();
   .offer-card {
     position: relative; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
     padding: 16px; display: flex; flex-direction: column; gap: 12px;
-    height: 100%; min-height: 320px;
+    height: 100%; min-height: 320px; min-width: 0; overflow: hidden;
   }
   .ofc-head { display: flex; align-items: flex-start; gap: 10px; }
   .ofc-logo {
