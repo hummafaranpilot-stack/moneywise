@@ -20,8 +20,7 @@ require_login();
     background: #16a34a; color: #fff; border: none; font-weight: 700;
     padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 13.5px;
   }
-  .grid {
-    max-width: 1200px; margin: 0 auto;
+  .offers-cards-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;
   }
 
@@ -78,6 +77,36 @@ require_login();
   .ofc-actions button.del:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
   .ofc-actions svg { width: 13px; height: 13px; }
 
+  /* Sections (Priority / Today / This Week / This Month / Older) */
+  .offers-section { max-width: 1200px; margin: 0 auto 22px; }
+  .offers-section-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px; margin-bottom: 10px;
+    background: linear-gradient(135deg, #eff6ff, #faf5ff);
+    border: 1px solid #c7d2fe; border-radius: 10px;
+  }
+  .offers-section-title { font-size: 14px; font-weight: 800; color: #1e3a8a; }
+  .offers-section-sub { font-size: 11.5px; color: #64748b; font-weight: 500; margin-top: 2px; }
+  .offers-section-count { margin-left: auto; background: #16a34a; color: #fff; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+  .offers-section.priority-section .offers-section-head { background: linear-gradient(135deg, #fffbeb, #fef3c7); border-color: #fcd34d; }
+  .offers-section.priority-section .offers-section-title { color: #92400e; }
+  .offers-section.priority-section .offers-section-count { background: #f59e0b; }
+  .offers-section-star { width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+  .offers-section-star svg { width: 18px; height: 18px; }
+
+  /* Star + enable/disable toggle on each card */
+  .ofc-star { flex-shrink: 0; background: none; border: none; cursor: pointer; color: #cbd5e1; padding: 2px; display: inline-flex; align-items: center; }
+  .ofc-star:hover { color: #f59e0b; }
+  .ofc-star.on { color: #f59e0b; }
+  .ofc-star.on svg { fill: #f59e0b; }
+  .ofc-star svg { width: 20px; height: 20px; }
+  .ofc-toggle { flex-shrink: 0; position: relative; width: 34px; height: 20px; border: none; border-radius: 999px; cursor: pointer; padding: 0; background: #cbd5e1; }
+  .ofc-toggle.on { background: #16a34a; }
+  .ofc-toggle-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.16s; }
+  .ofc-toggle.on .ofc-toggle-knob { transform: translateX(14px); }
+  .offer-card.offer-disabled { opacity: 0.55; filter: grayscale(0.5); }
+  .ofc-group-badge { background: #16a34a; color: #fff; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; margin-left: 6px; }
+
   /* Modal */
   .modal-back { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: none; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
   .modal-back.open { display: flex; }
@@ -105,7 +134,7 @@ require_login();
   <button class="btn-add" onclick="openOfferModal()">+ Add Offer</button>
 </div>
 
-<div class="grid" id="grid"></div>
+<div id="grid" style="max-width:1200px;margin:0 auto;"></div>
 
 <!-- ADD/EDIT MODAL -->
 <div class="modal-back" id="offer-modal" onclick="if(event.target===this) closeOfferModal()">
@@ -230,24 +259,75 @@ async function loadOffers() {
   render();
 }
 
+const STAR_ICON = '<span class="offers-section-star"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>';
+
 function render() {
   const grid = $('grid');
   if (!_offersCache.length) {
     grid.innerHTML = '<div class="empty">No offers yet — click "+ Add Offer" to create one.</div>';
     return;
   }
-  grid.innerHTML = _offersCache.map(renderCard).join('');
+
+  const groupKey = o => (o.name || '').toLowerCase().trim() || o.id;
+  const nameSize = new Map();
+  for (const o of _offersCache) nameSize.set(groupKey(o), (nameSize.get(groupKey(o)) || 0) + 1);
+
+  const ts = o => Date.parse(o.createdAt || o.updatedAt || '') || 0;
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+  const todayMs = startOfToday.getTime();
+  const weekAgoMs = todayMs - 6 * 86400000;
+  const monthAgoMs = todayMs - 29 * 86400000;
+
+  const priorityOffers = [], bucketToday = [], bucketWeek = [], bucketMonth = [], bucketOlder = [];
+  for (const o of _offersCache) {
+    if (o.priority) { priorityOffers.push(o); continue; }
+    const t = ts(o);
+    if (t >= todayMs) bucketToday.push(o);
+    else if (t >= weekAgoMs) bucketWeek.push(o);
+    else if (t >= monthAgoMs) bucketMonth.push(o);
+    else bucketOlder.push(o);
+  }
+
+  function renderSection(title, subtitle, items, opts) {
+    opts = opts || {};
+    if (!items.length) return '';
+    const sorted = [...items].sort((a, b) => ts(b) - ts(a));
+    const cards = sorted.map(o => {
+      const gk = groupKey(o);
+      const total = nameSize.get(gk) || 1;
+      const badge = total > 1 ? '<span class="ofc-group-badge">×' + total + '</span>' : '';
+      return renderCard(o, badge);
+    }).join('');
+    return `
+      <div class="offers-section${opts.headClass ? ' ' + opts.headClass : ''}">
+        <div class="offers-section-head">
+          ${opts.icon || ''}
+          <div><div class="offers-section-title">${esc(title)}</div><div class="offers-section-sub">${esc(subtitle)}</div></div>
+          <span class="offers-section-count">${items.length}</span>
+        </div>
+        <div class="offers-cards-grid">${cards}</div>
+      </div>
+    `;
+  }
+
+  grid.innerHTML = ''
+    + renderSection('Priority', 'Starred offers', priorityOffers, { headClass: 'priority-section', icon: STAR_ICON })
+    + renderSection('🟢 Today', 'Added today', bucketToday)
+    + renderSection('🗓 This Week', 'Added in the last 7 days', bucketWeek)
+    + renderSection('📅 This Month', 'Added in the last 30 days', bucketMonth)
+    + renderSection('🗂 Older', 'Older than 30 days', bucketOlder);
 }
 
-function renderCard(o) {
+function renderCard(o, groupBadge) {
   const restrictions = (o.restrictions && o.restrictions.length)
     ? o.restrictions.map(r => '<span class="ofc-restrict">' + esc(r) + '</span>').join('')
     : '<span class="ofc-restrict empty">No restrictions</span>';
   const initials = (o.name || '?').trim().slice(0, 2).toUpperCase();
   const tg = (o.accountTelegram || '').replace(/^@/, '');
   const accent = colorFor(o.id);
+  const disabled = o.enabled === false;
   return `
-    <div class="offer-card">
+    <div class="offer-card${disabled ? ' offer-disabled' : ''}">
       <div class="ofc-actions">
         <button onclick="showMoneyWiseLink('${esc(o.id)}')" title="View MoneyWise Link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
         <button onclick="editOffer('${esc(o.id)}')" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -256,10 +336,12 @@ function renderCard(o) {
       <div class="ofc-head">
         <div class="ofc-logo" style="background:${accent};">${esc(initials)}</div>
         <div style="flex:1;min-width:0;">
-          <div class="ofc-name">${esc(o.name)}</div>
+          <div class="ofc-name">${esc(o.name)}${groupBadge || ''}</div>
           ${o.network ? '<div class="ofc-sub">' + esc(o.network) + '</div>' : ''}
         </div>
         <button class="ofc-payout">${esc(o.payout || 'Set CPA')}</button>
+        <button class="ofc-toggle${disabled ? '' : ' on'}" onclick="toggleOfferEnabled('${esc(o.id)}')" title="${disabled ? 'Disabled — click to enable' : 'Enabled — click to disable'}"><span class="ofc-toggle-knob"></span></button>
+        <button class="ofc-star${o.priority ? ' on' : ''}" onclick="toggleOfferPriority('${esc(o.id)}')" title="${o.priority ? 'Remove from Priority' : 'Mark as Priority'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
       </div>
       <div class="ofc-body">
         ${(o.conversionRate || o.internalName) ? '<div class="ofc-meta">' + (o.conversionRate ? '<span class="ofc-cr">CR ' + esc(o.conversionRate) + '</span>' : '') + (o.internalName ? '<span class="ofc-internal">' + esc(o.internalName) + '</span>' : '') + '</div>' : ''}
@@ -358,6 +440,28 @@ async function deleteOffer(id) {
   if (!confirm('Delete this offer?')) return;
   await fetch('offers-api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _action: 'delete', id }) });
   await loadOffers();
+}
+
+async function toggleOfferPriority(id) {
+  const o = _offersCache.find(x => x.id === id);
+  if (!o) return;
+  const next = !o.priority;
+  o.priority = next; render(); // optimistic
+  try {
+    const r = await fetch('offers-api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _action: 'update', id, priority: next }) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  } catch (e) { o.priority = !next; render(); alert('Failed: ' + e.message); }
+}
+
+async function toggleOfferEnabled(id) {
+  const o = _offersCache.find(x => x.id === id);
+  if (!o) return;
+  const next = o.enabled === false; // currently disabled -> enable
+  o.enabled = next; render(); // optimistic
+  try {
+    const r = await fetch('offers-api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _action: 'update', id, enabled: next }) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  } catch (e) { o.enabled = !next; render(); alert('Failed: ' + e.message); }
 }
 
 function showMoneyWiseLink(offerId) {
