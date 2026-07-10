@@ -1,3 +1,19 @@
+# Admin pages show live, frequently-changing data — never let LiteSpeed/Apache
+# cache them, regardless of what the PHP-level headers already say.
+<FilesMatch "^(offers|stats|offers-api|stats-api|login)\.php$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0, private"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </IfModule>
+  <IfModule LiteSpeed>
+    CacheDisable public /offers.php
+    CacheDisable public /stats.php
+    CacheDisable public /offers-api.php
+    CacheDisable public /stats-api.php
+  </IfModule>
+</FilesMatch>
+
 RewriteEngine On
 
 # Existing files/folders (offers.php, stats.php, login.php, assets, etc.) serve as-is.

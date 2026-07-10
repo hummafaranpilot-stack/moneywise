@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
 require_login_api();
+no_cache_headers();
 
 header('Content-Type: application/json');
 
