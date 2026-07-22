@@ -460,7 +460,15 @@ function closeOfferModal() { $('offer-modal').classList.remove('open'); _editing
 async function submitOfferForm() {
   const name = $('of-name').value.trim();
   if (!name) { alert('Offer name required'); return; }
-  const id = $('of-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+  // Editing an existing offer: the ID field is read-only (see openOfferModal),
+  // so use the already-saved id as-is — re-sanitizing it here was stripping
+  // underscores (regex only allowed a-z0-9-), breaking Save for any offer
+  // whose id contains one (e.g. "rush_permit" -> "rushpermit" -> 404 "not
+  // found", since the backend's own slugify() uses underscores as its
+  // separator). Only sanitize when creating a brand-new offer.
+  const id = _editingOfferId
+    ? _editingOfferId
+    : $('of-id').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
   if (!id) { alert('Unique ID required'); return; }
   const link = $('of-link').value.trim();
   if (!link) { alert('Destination link required'); return; }
