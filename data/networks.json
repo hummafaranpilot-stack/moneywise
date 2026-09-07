@@ -104,5 +104,22 @@
     "notes": "",
     "id": "clickdealer_david_jordan-luay",
     "createdAt": "2026-07-08T10:08:40.728Z"
+  },
+  {
+    "name": "PL",
+    "identity": "David Jordan",
+    "email": "",
+    "telegram": "@DavidJordanCPA",
+    "ourTracker": "",
+    "ownerTracker": "Custom Tracker",
+    "status": "approved",
+    "paymentTerms": "Weekly",
+    "minPayout": "$500",
+    "paymentMethods": "",
+    "manager": "",
+    "notes": "",
+    "id": "pl_david_jordan-9mtx",
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "enabled": true
   }
 ]
