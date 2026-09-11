@@ -121,5 +121,22 @@
     "id": "pl_david_jordan-9mtx",
     "createdAt": "2026-09-07T00:00:00.000Z",
     "enabled": true
+  },
+  {
+    "name": "Ekomilta",
+    "identity": "Humma Iqbal",
+    "email": "",
+    "telegram": "",
+    "ourTracker": "",
+    "ownerTracker": "",
+    "status": "approved",
+    "paymentTerms": "",
+    "minPayout": "$1000",
+    "paymentMethods": "",
+    "manager": "",
+    "notes": "",
+    "id": "ekomilta_humma_iqbal-7k2p",
+    "createdAt": "2026-09-11T00:00:00.000Z",
+    "enabled": true
   }
 ]
