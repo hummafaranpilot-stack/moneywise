@@ -55,6 +55,7 @@ no_cache_headers();
   .ofc-meta { display: flex; gap: 8px; flex-wrap: wrap; }
   .ofc-cr { background: #eff6ff; color: #1e40af; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
   .ofc-cap { background: #fdf4ff; color: #86198f; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .ofc-threshold { background: #fff7ed; color: #9a3412; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
   .ofc-internal { font-size: 11px; color: #64748b; font-style: italic; }
 
   .ofc-section {
@@ -191,9 +192,25 @@ no_cache_headers();
         <input id="of-cr" type="text" placeholder="6-12%+">
       </div>
     </div>
+    <div class="row-2">
+      <div class="field">
+        <label class="field-label" for="of-daily-cap">Daily Cap <span class="hint">(optional — max sales/day)</span></label>
+        <input id="of-daily-cap" type="number" min="0" placeholder="e.g. 2">
+      </div>
+      <div class="field">
+        <label class="field-label" for="of-cap">Weekly Cap <span class="hint">(max sales/week — Mon to Sun)</span></label>
+        <input id="of-cap" type="number" min="0" placeholder="e.g. 5">
+      </div>
+    </div>
     <div class="field">
-      <label class="field-label" for="of-cap">Weekly Cap <span class="hint">(max sales/week for this offer — Monday to Sunday)</span></label>
-      <input id="of-cap" type="number" min="0" placeholder="e.g. 5">
+      <label class="field-label" for="of-threshold">Weekly Threshold <span class="hint">(optional — in conversions or in balance $)</span></label>
+      <div style="display:flex;gap:10px;">
+        <input id="of-threshold" type="number" min="0" step="any" placeholder="e.g. 10" style="flex:1;">
+        <select id="of-threshold-type" style="width:170px;">
+          <option value="conversions">Conversions</option>
+          <option value="balance">Balance ($)</option>
+        </select>
+      </div>
     </div>
     <div class="field">
       <label class="field-label" for="of-account">Account Name</label>
@@ -402,7 +419,7 @@ function renderCard(o, groupBadge) {
         </div>
       </div>
       <div class="ofc-body">
-        ${(o.conversionRate || o.internalName || o.cap != null) ? '<div class="ofc-meta">' + (o.conversionRate ? '<span class="ofc-cr">CR ' + esc(o.conversionRate) + '</span>' : '') + (o.cap != null ? '<span class="ofc-cap">Cap ' + esc(o.cap) + '/week</span>' : '') + (o.internalName ? '<span class="ofc-internal">' + esc(o.internalName) + '</span>' : '') + '</div>' : ''}
+        ${(o.conversionRate || o.internalName || o.cap != null || o.dailyCap != null || o.weeklyThreshold != null) ? '<div class="ofc-meta">' + (o.conversionRate ? '<span class="ofc-cr">CR ' + esc(o.conversionRate) + '</span>' : '') + (o.dailyCap != null ? '<span class="ofc-cap">Cap ' + esc(o.dailyCap) + '/day</span>' : '') + (o.cap != null ? '<span class="ofc-cap">Cap ' + esc(o.cap) + '/week</span>' : '') + (o.weeklyThreshold != null ? '<span class="ofc-threshold">Threshold ' + (o.weeklyThresholdType === 'balance' ? '$' + esc(o.weeklyThreshold) : esc(o.weeklyThreshold) + ' conv') + '/week</span>' : '') + (o.internalName ? '<span class="ofc-internal">' + esc(o.internalName) + '</span>' : '') + '</div>' : ''}
         <div class="ofc-section">
           <div class="ofc-section-k">Identity</div>
           <div class="ofc-identity">
@@ -444,6 +461,9 @@ function openOfferModal(offer) {
   $('of-payout').value = offer ? (offer.payout || '') : '';
   $('of-cr').value = offer ? (offer.conversionRate || '') : '';
   $('of-cap').value = offer && offer.cap != null ? offer.cap : '';
+  $('of-daily-cap').value = offer && offer.dailyCap != null ? offer.dailyCap : '';
+  $('of-threshold').value = offer && offer.weeklyThreshold != null ? offer.weeklyThreshold : '';
+  $('of-threshold-type').value = offer && offer.weeklyThresholdType === 'balance' ? 'balance' : 'conversions';
   $('of-account').value = offer ? (offer.account || '') : '';
   $('of-account-email').value = offer ? (offer.accountEmail || '') : '';
   $('of-account-telegram').value = offer ? (offer.accountTelegram || '') : '';
@@ -481,6 +501,9 @@ async function submitOfferForm() {
     payout: $('of-payout').value.trim(),
     conversionRate: $('of-cr').value.trim(),
     cap: $('of-cap').value.trim() === '' ? null : parseInt($('of-cap').value, 10),
+    dailyCap: $('of-daily-cap').value.trim() === '' ? null : parseInt($('of-daily-cap').value, 10),
+    weeklyThreshold: $('of-threshold').value.trim() === '' ? null : parseFloat($('of-threshold').value),
+    weeklyThresholdType: $('of-threshold-type').value,
     account: $('of-account').value.trim(),
     accountEmail: $('of-account-email').value.trim(),
     accountTelegram: $('of-account-telegram').value.trim().replace(/^@/, ''),
