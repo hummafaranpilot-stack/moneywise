@@ -172,5 +172,22 @@
     "id": "paysale_adeel-luay",
     "createdAt": "2026-09-11T00:00:00.000Z",
     "enabled": true
+  },
+  {
+    "name": "Sweeply",
+    "identity": "CoastalVista",
+    "email": "",
+    "telegram": "",
+    "ourTracker": "",
+    "ownerTracker": "",
+    "status": "approved",
+    "paymentTerms": "Weekly Net-0",
+    "minPayout": "$1000",
+    "paymentMethods": "",
+    "manager": "",
+    "notes": "",
+    "id": "sweeply_coastalvista-w3n0",
+    "createdAt": "2026-10-05T00:00:00.000Z",
+    "enabled": true
   }
 ]
