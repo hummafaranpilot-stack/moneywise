@@ -362,7 +362,10 @@ function render() {
   function renderSection(title, subtitle, items, opts) {
     opts = opts || {};
     if (!items.length) return '';
-    const sorted = [...items].sort((a, b) => ts(b) - ts(a));
+    // Same-network offers sit together (networks A→Z, no network last), newest first within a network.
+    const netKey = o => (o.network || '').toLowerCase().trim();
+    const byNetwork = (a, b) => (!netKey(a) - !netKey(b)) || netKey(a).localeCompare(netKey(b));
+    const sorted = [...items].sort((a, b) => byNetwork(a, b) || ts(b) - ts(a));
     const cards = sorted.map(o => {
       const gk = groupKey(o);
       const total = nameSize.get(gk) || 1;
