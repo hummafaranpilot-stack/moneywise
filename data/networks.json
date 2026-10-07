@@ -223,5 +223,22 @@
     "id": "nutraindex_coastalvista-n7x1",
     "createdAt": "2026-10-07T00:00:00.000Z",
     "enabled": true
+  },
+  {
+    "name": "BH Ads",
+    "identity": "CoastalVista",
+    "email": "",
+    "telegram": "",
+    "ourTracker": "",
+    "ownerTracker": "",
+    "status": "approved",
+    "paymentTerms": "Net-0 Weekly",
+    "minPayout": "$1000",
+    "paymentMethods": "",
+    "manager": "",
+    "notes": "",
+    "id": "bh_ads_coastalvista-b4h2",
+    "createdAt": "2026-10-07T00:00:00.000Z",
+    "enabled": true
   }
 ]
