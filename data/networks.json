@@ -206,5 +206,22 @@
     "id": "mobidea_coastalvista-m0b1",
     "createdAt": "2026-10-06T00:00:00.000Z",
     "enabled": true
+  },
+  {
+    "name": "NutraIndex",
+    "identity": "CoastalVista",
+    "email": "",
+    "telegram": "",
+    "ourTracker": "",
+    "ownerTracker": "",
+    "status": "approved",
+    "paymentTerms": "Net-7 Weekly",
+    "minPayout": "$1000",
+    "paymentMethods": "",
+    "manager": "",
+    "notes": "",
+    "id": "nutraindex_coastalvista-n7x1",
+    "createdAt": "2026-10-07T00:00:00.000Z",
+    "enabled": true
   }
 ]
