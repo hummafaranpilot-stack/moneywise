@@ -240,5 +240,22 @@
     "id": "bh_ads_coastalvista-b4h2",
     "createdAt": "2026-10-07T00:00:00.000Z",
     "enabled": true
+  },
+  {
+    "name": "Orbio World",
+    "identity": "Adeel Amin",
+    "email": "",
+    "telegram": "",
+    "ourTracker": "",
+    "ownerTracker": "",
+    "status": "approved",
+    "paymentTerms": "Weekly",
+    "minPayout": "$1000",
+    "paymentMethods": "",
+    "manager": "",
+    "notes": "",
+    "id": "orbio_world_adeel_amin-o8w1",
+    "createdAt": "2026-10-15T00:00:00.000Z",
+    "enabled": true
   }
 ]
