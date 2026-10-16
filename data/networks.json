@@ -257,5 +257,22 @@
     "id": "orbio_world_adeel_amin-o8w1",
     "createdAt": "2026-10-15T00:00:00.000Z",
     "enabled": true
+  },
+  {
+    "name": "VIP Response",
+    "identity": "Rajpurohit",
+    "email": "",
+    "telegram": "",
+    "ourTracker": "",
+    "ownerTracker": "",
+    "status": "approved",
+    "paymentTerms": "Weekly",
+    "minPayout": "$1000",
+    "paymentMethods": "",
+    "manager": "",
+    "notes": "",
+    "id": "vip_response_rajpurohit-v1p9",
+    "createdAt": "2026-10-16T00:00:00.000Z",
+    "enabled": true
   }
 ]
