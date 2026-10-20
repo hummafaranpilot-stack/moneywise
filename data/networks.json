@@ -274,5 +274,22 @@
     "id": "vip_response_rajpurohit-v1p9",
     "createdAt": "2026-10-16T00:00:00.000Z",
     "enabled": true
+  },
+  {
+    "name": "Vantage Digital",
+    "identity": "Rajpurohit",
+    "email": "",
+    "telegram": "",
+    "ourTracker": "",
+    "ownerTracker": "Everflow",
+    "status": "approved",
+    "paymentTerms": "Weekly",
+    "minPayout": "$1000",
+    "paymentMethods": "",
+    "manager": "",
+    "notes": "",
+    "id": "vantage_digital_rajpurohit-v4d2",
+    "createdAt": "2026-10-20T00:00:00.000Z",
+    "enabled": true
   }
 ]
