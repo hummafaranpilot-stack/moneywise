@@ -308,5 +308,22 @@
     "id": "clickstack_rajpurohit-c5k4",
     "createdAt": "2026-10-25T00:00:00.000Z",
     "enabled": true
+  },
+  {
+    "name": "Rush",
+    "identity": "Rajpurohit",
+    "email": "",
+    "telegram": "",
+    "ourTracker": "",
+    "ownerTracker": "",
+    "status": "approved",
+    "paymentTerms": "Weekly Net-0",
+    "minPayout": "$500",
+    "paymentMethods": "",
+    "manager": "",
+    "notes": "",
+    "id": "rush_rajpurohit-r5h0",
+    "createdAt": "2026-10-26T00:00:00.000Z",
+    "enabled": true
   }
 ]
