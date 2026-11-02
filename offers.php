@@ -303,7 +303,10 @@ async function _populateOfferNetworkPicker(selectedName) {
   if (!sel) return;
   try {
     const r = await fetch('networks-api.php');
-    _networksCache = r.ok ? await r.json() : [];
+    const all = r.ok ? await r.json() : [];
+    // Only enabled networks — plus, when editing, the offer's current network even if it was disabled since.
+    const current = (selectedName || '').toLowerCase();
+    _networksCache = all.filter(n => n.enabled !== false || (current && (n.name || '').toLowerCase() === current));
     if (!_networksCache.length) {
       sel.innerHTML = '<option value="">— no networks yet — ask to add one —</option>';
       return;

@@ -136,6 +136,10 @@ function renderClicks(clicks) {
       ? '<span style="color:#4ade80;">✓ Redirected</span>'
       : '<span style="color:#f87171;">✗ ' + esc(c.reason || 'blocked') + '</span>';
     const time = new Date(c.ts).toLocaleString();
+    const CONV_COLORS = { approved: '#4ade80', pending: '#fbbf24', hold: '#60a5fa', declined: '#f87171' };
+    const conv = c.conversion
+      ? '<span style="color:' + (CONV_COLORS[c.conversion.status] || '#94a3b8') + ';font-weight:700;">✓ ' + esc(c.conversion.status) + (c.conversion.payout ? ' $' + esc(c.conversion.payout.toFixed(2)) : '') + '</span>'
+      : '<span style="color:#64748b;">—</span>';
     return `
       <tr>
         <td>${esc(time)}</td>
@@ -145,15 +149,17 @@ function renderClicks(clicks) {
         <td>${esc(c.region)}</td>
         <td>${esc(c.zip)}</td>
         <td>${statusBadge}</td>
+        <td style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#94a3b8;">${esc(c.s2 || '')}</td>
+        <td>${conv}</td>
       </tr>
     `;
   }).join('');
   wrap.innerHTML = `
     <table>
       <thead>
-        <tr><th>Time</th><th>Offer</th><th>IP</th><th>City</th><th>State</th><th>Zip</th><th>Status</th></tr>
+        <tr><th>Time</th><th>Offer</th><th>IP</th><th>City</th><th>State</th><th>Zip</th><th>Status</th><th>S2</th><th>Conversion</th></tr>
       </thead>
-      <tbody>${rows || '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:24px;">No clicks recorded yet for this range.</td></tr>'}</tbody>
+      <tbody>${rows || '<tr><td colspan="9"style="text-align:center;color:#64748b;padding:24px;">No clicks recorded yet for this range.</td></tr>'}</tbody>
     </table>
   `;
 }

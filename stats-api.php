@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/postbacks.php';
 require_login_api();
 no_cache_headers();
 
@@ -41,5 +42,12 @@ foreach ($offers as $o) {
 $recent = array_values($filtered);
 usort($recent, fn($a, $b) => strcmp($b['ts'], $a['ts']));
 $recent = array_slice($recent, 0, 200);
+
+// Mark clicks whose s2 came back in a postback.
+$convByClick = conversions_by_click(db_read('postbacks.json', []));
+foreach ($recent as &$c) {
+    $c['conversion'] = ($c['s2'] ?? '') !== '' ? ($convByClick[$c['s2']] ?? null) : null;
+}
+unset($c);
 
 echo json_encode(['offers' => $offers, 'totals' => $totals, 'clicks' => $recent]);

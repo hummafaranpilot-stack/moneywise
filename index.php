@@ -131,9 +131,11 @@ if ($offerId === '') {
 $map = db_read('offers-map.json', []);
 $dest = $map[$offerId] ?? null;
 $ip = client_ip();
+// Our click id for this visit (traffic link ?s2=...); postbacks are matched back to it.
+$s2 = (string) ($_GET['s2'] ?? '');
 
 if (!$dest) {
-    append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => null, 'region' => null, 'city' => null, 'zip' => null, 'valid' => false, 'redirected' => false, 'reason' => 'offer-not-found']);
+    append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => null, 'region' => null, 'city' => null, 'zip' => null, 'valid' => false, 'redirected' => false, 'reason' => 'offer-not-found', 's2' => $s2]);
     http_response_code(404);
     header('Content-Type: text/plain');
     echo 'Offer not found: ' . $offerId;
@@ -147,7 +149,7 @@ if (!$isUs) {
     append_click([
         'ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip,
         'country' => $geo['country'] ?? null, 'region' => $geo['regionName'] ?? null, 'city' => $geo['city'] ?? null, 'zip' => $geo['zip'] ?? null,
-        'valid' => false, 'redirected' => false, 'reason' => $geo ? 'non-us-ip' : 'geo-lookup-failed',
+        'valid' => false, 'redirected' => false, 'reason' => $geo ? 'non-us-ip' : 'geo-lookup-failed', 's2' => $s2,
     ]);
     header('Content-Type: text/html');
     render_rejected($geo['country'] ?? null);
@@ -166,7 +168,7 @@ $host = $parts['host'] ?? '';
 $path = $parts['path'] ?? '';
 $finalUrl = $scheme . '://' . $host . $path . ($query ? '?' . $query : '');
 
-append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => $geo['country'], 'region' => $geo['regionName'], 'city' => $geo['city'], 'zip' => $geo['zip'] ?? null, 'valid' => true, 'redirected' => true, 'reason' => null]);
+append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => $geo['country'], 'region' => $geo['regionName'], 'city' => $geo['city'], 'zip' => $geo['zip'] ?? null, 'valid' => true, 'redirected' => true, 'reason' => null, 's2' => $s2]);
 
 header('Content-Type: text/html');
 render_redirecting($finalUrl, $geo['city'], $geo['regionName']);

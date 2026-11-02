@@ -196,15 +196,16 @@ function renderConversions(convs) {
       <td>${esc(c.geo)}</td>
       <td class="mono">${esc(c.sub1)}</td>
       <td class="mono">${esc(c.clickid)}</td>
+      <td>${c.click ? '<span class="c-approved">✓</span> ' + esc(new Date(c.click.ts).toLocaleString()) + (c.click.city ? ' · ' + esc(c.click.city) + ', ' + esc(c.click.region) : '') : '<span style="color:#64748b;">—</span>'}</td>
       <td class="mono">${esc(c.txid)}</td>
     </tr>
   `).join('');
   document.getElementById('convTableWrap').innerHTML = `
     <div class="table-scroll"><table>
       <thead>
-        <tr><th>Last Update</th><th>Offer</th><th>Status</th><th>Payout</th><th>Goal</th><th>Geo</th><th>Sub1</th><th>Click ID</th><th>Transaction ID</th></tr>
+        <tr><th>Last Update</th><th>Offer</th><th>Status</th><th>Payout</th><th>Goal</th><th>Geo</th><th>Sub1</th><th>Click ID</th><th>Matched Click</th><th>Transaction ID</th></tr>
       </thead>
-      <tbody>${rows || '<tr><td colspan="9" style="text-align:center;color:#64748b;padding:24px;">No postbacks received yet for this range.</td></tr>'}</tbody>
+      <tbody>${rows || '<tr><td colspan="10"style="text-align:center;color:#64748b;padding:24px;">No postbacks received yet for this range.</td></tr>'}</tbody>
     </table></div>
   `;
 }

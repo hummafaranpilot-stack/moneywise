@@ -1,13 +1,11 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/postbacks.php';
 require_login_api();
 no_cache_headers();
 
 header('Content-Type: application/json');
-
-// Affise {status} values.
-const STATUS_NAMES = ['1' => 'approved', '2' => 'pending', '3' => 'declined', '5' => 'hold'];
 
 function date_key($iso) { return substr($iso, 0, 10); }
 
@@ -15,6 +13,12 @@ $from = $_GET['from'] ?? '';
 $to   = $_GET['to']   ?? '';
 
 $postbacks = db_read('postbacks.json', []);
+
+// Our own clicks by the id passed in the traffic link (s2), to show which click converted.
+$clicksById = [];
+foreach (db_read('clicks-log.json', []) as $c) {
+    if (($c['s2'] ?? '') !== '') $clicksById[$c['s2']] = $c;
+}
 
 // A conversion fires a new postback every time its status changes (pending -> approved, ...).
 // Collapse them by transaction id so each conversion counts once, with its latest status.
@@ -24,18 +28,21 @@ foreach ($postbacks as $i => $pb) {
     $status = STATUS_NAMES[(string) ($p['status'] ?? '')] ?? null;
     $txid = $p['txid'] ?? '';
     if ($status === null && $txid === '') continue; // manual test hits, not real conversions
-    $key = $txid !== '' ? 'tx:' . $txid : (($p['clickid'] ?? '') !== '' ? 'click:' . $p['clickid'] : 'row:' . $i);
+    $clickId = postback_click_id($p);
+    $key = $txid !== '' ? 'tx:' . $txid : ($clickId !== '' ? 'click:' . $clickId : 'row:' . $i);
+    $click = $clicksById[$clickId] ?? null;
 
     $conv = [
         'ts'        => $pb['ts'],
         'firstTs'   => $conversions[$key]['firstTs'] ?? $pb['ts'],
         'txid'      => $txid,
-        'clickid'   => $p['clickid'] ?? '',
+        'clickid'   => $clickId,
+        'click'     => $click ? ['ts' => $click['ts'], 'offerId' => $click['offerId'], 'city' => $click['city'], 'region' => $click['region']] : null,
         'status'    => $status ?? 'unknown',
         'payout'    => is_numeric($p['payout'] ?? null) ? (float) $p['payout'] : 0.0,
         'currency'  => $p['currency'] ?? '',
-        'offerId'   => $p['offer'] ?? '',
-        'offerName' => ($p['offer_name'] ?? '') !== '' ? $p['offer_name'] : ($p['offer'] ?? '(unknown)'),
+        'offerId'   => $p['offer'] ?? ($click['offerId'] ?? ''),
+        'offerName' => ($p['offer_name'] ?? '') !== '' ? $p['offer_name'] : ($p['offer'] ?? ($click['offerId'] ?? '(unknown)')),
         'goal'      => $p['goal'] ?? '',
         'sub1'      => $p['sub1'] ?? '',
         'geo'       => $p['geo'] ?? '',
