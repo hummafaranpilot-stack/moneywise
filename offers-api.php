@@ -36,6 +36,7 @@ if ($action === 'create') {
         'id' => $id,
         'link' => $body['link'],
         'name' => $body['name'],
+        'domain' => $body['domain'] ?? 'moneywise2026.com',
         'network' => $body['network'] ?? '',
         'account' => $body['account'] ?? '',
         'accountEmail' => $body['accountEmail'] ?? '',

@@ -162,7 +162,14 @@ no_cache_headers();
       <input id="of-name" type="text" placeholder="e.g. Lulutox">
     </div>
     <div class="field">
-      <label class="field-label" for="of-id">Unique ID<span class="req">*</span> <span class="hint">(used in moneywise2026.com/&lt;id&gt;)</span></label>
+      <label class="field-label" for="of-domain">Domain <span class="hint">(short link is built on this domain)</span></label>
+      <select id="of-domain">
+        <option value="moneywise2026.com">moneywise2026.com</option>
+        <option value="mindframemedia.in">mindframemedia.in</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="field-label" for="of-id">Unique ID<span class="req">*</span> <span class="hint">(used in &lt;domain&gt;/&lt;id&gt;)</span></label>
       <input id="of-id" type="text" placeholder="e.g. nuubu" style="font-family:monospace;">
     </div>
     <div class="field">
@@ -276,7 +283,12 @@ no_cache_headers();
 </div>
 
 <script>
-const MONEYWISE_DOMAIN = 'https://moneywise2026.com';
+// Both domains serve the same site (mindframemedia.in is parked on
+// moneywise2026.com), so an offer's link works on either — the saved domain
+// just decides which one the admin is handed.
+const DEFAULT_DOMAIN = 'moneywise2026.com';
+function offerDomain(o) { return (o && o.domain) || DEFAULT_DOMAIN; }
+function offerLink(id) { return 'https://' + offerDomain(_offersCache.find(x => x.id === id)) + '/' + id; }
 let _offersCache = [];
 let _networksCache = [];
 let _editingOfferId = null;
@@ -434,7 +446,7 @@ function renderCard(o, groupBadge) {
         <div class="ofc-mw-link">
           <div style="flex:1;min-width:0;">
             <div class="ofc-mw-link-k">Traffic Link</div>
-            <div class="ofc-mw-link-text">moneywise2026.com/${esc(o.id)}</div>
+            <div class="ofc-mw-link-text">${esc(offerDomain(o))}/${esc(o.id)}</div>
           </div>
           <button class="ofc-mw-copy" onclick="copyOfferCardLink('${esc(o.id)}', this)" title="Copy MoneyWise link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         </div>
@@ -458,6 +470,7 @@ function openOfferModal(offer) {
   $('of-name').value = offer ? (offer.name || '') : '';
   $('of-id').value = offer ? (offer.id || '') : '';
   $('of-id').readOnly = !!offer;
+  $('of-domain').value = offerDomain(offer);
   $('of-link').value = offer ? (offer.link || '') : '';
   $('of-network').value = offer ? (offer.network || '') : '';
   $('of-internal-name').value = offer ? (offer.internalName || '') : '';
@@ -499,6 +512,7 @@ async function submitOfferForm() {
   const payload = {
     _action: _editingOfferId ? 'update' : 'create',
     id, link, name,
+    domain: $('of-domain').value,
     network: $('of-network').value.trim(),
     internalName: $('of-internal-name').value.trim(),
     payout: $('of-payout').value.trim(),
@@ -560,7 +574,7 @@ async function toggleOfferEnabled(id) {
 }
 
 function showMoneyWiseLink(offerId) {
-  $('mw-link-value').value = MONEYWISE_DOMAIN + '/' + offerId;
+  $('mw-link-value').value = offerLink(offerId);
   $('mw-link-modal').classList.add('open');
 }
 function closeMoneyWiseLinkModal() { $('mw-link-modal').classList.remove('open'); }
@@ -569,7 +583,7 @@ function copyMoneyWiseLink() {
   navigator.clipboard.writeText(inp.value).catch(() => document.execCommand('copy'));
 }
 function copyOfferCardLink(offerId, btn) {
-  navigator.clipboard.writeText(MONEYWISE_DOMAIN + '/' + offerId).catch(() => {});
+  navigator.clipboard.writeText(offerLink(offerId)).catch(() => {});
   _flashCopyIcon(btn);
 }
 function copyDestLink(offerId, btn) {
