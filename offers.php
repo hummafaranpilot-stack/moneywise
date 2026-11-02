@@ -145,7 +145,10 @@ no_cache_headers();
 
 <div class="topbar">
   <div class="brand">MoneyWise — Offers</div>
-  <button class="btn-add" onclick="openOfferModal()">+ Add Offer</button>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <a href="networks.php" style="color:#475569;font-size:13.5px;font-weight:600;text-decoration:none;padding:9px 14px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;">Networks</a>
+    <button class="btn-add" onclick="openOfferModal()">+ Add Offer</button>
+  </div>
 </div>
 
 <div id="grid" style="max-width:1800px;margin:0 auto;"></div>

@@ -124,7 +124,7 @@ $offerId = $_GET['offer'] ?? '';
 
 if ($offerId === '') {
     header('Content-Type: text/plain');
-    echo 'MoneyWise redirect service is running.';
+    echo 'Tracker is running.';
     exit;
 }
 

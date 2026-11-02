@@ -183,7 +183,7 @@ const server = http.createServer((req, res) => {
 
   if (!offerId) {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    return res.end('MoneyWise redirect service is running.');
+    return res.end('Tracker is running.');
   }
 
   const map = readMap();
