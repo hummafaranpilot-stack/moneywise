@@ -16,6 +16,9 @@
 
 RewriteEngine On
 
+# mindframemedia.in links use /offerid=<id> instead of /<id> (same offer either way).
+RewriteRule ^offerid=([a-zA-Z0-9_-]+)$ index.php?offer=$1 [L,QSA]
+
 # Existing files/folders (offers.php, stats.php, login.php, assets, etc.) serve as-is.
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

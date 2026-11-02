@@ -291,7 +291,9 @@ no_cache_headers();
 // just decides which one the admin is handed.
 const DEFAULT_DOMAIN = 'moneywise2026.com';
 function offerDomain(o) { return (o && o.domain) || DEFAULT_DOMAIN; }
-function offerLink(id) { return 'https://' + offerDomain(_offersCache.find(x => x.id === id)) + '/' + id; }
+// mindframemedia.in links read /offerid=<id>; .htaccess routes both forms to the same offer.
+function offerPath(o, id) { return offerDomain(o) + (offerDomain(o) === 'mindframemedia.in' ? '/offerid=' : '/') + id; }
+function offerLink(id) { return 'https://' + offerPath(_offersCache.find(x => x.id === id), id); }
 let _offersCache = [];
 let _networksCache = [];
 let _editingOfferId = null;
@@ -449,7 +451,7 @@ function renderCard(o, groupBadge) {
         <div class="ofc-mw-link">
           <div style="flex:1;min-width:0;">
             <div class="ofc-mw-link-k">Traffic Link</div>
-            <div class="ofc-mw-link-text">${esc(offerDomain(o))}/${esc(o.id)}</div>
+            <div class="ofc-mw-link-text">${esc(offerPath(o, o.id))}</div>
           </div>
           <button class="ofc-mw-copy" onclick="copyOfferCardLink('${esc(o.id)}', this)" title="Copy MoneyWise link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         </div>
