@@ -74,27 +74,13 @@ function render_redirecting($destUrl) {
 HTML;
 }
 
-function render_rejected($country) {
-    $where = esc($country ?: 'an unrecognized location');
+function render_rejected() {
     echo <<<HTML
 <!doctype html>
 <html><head><meta charset="utf-8">
-<title>MoneyWise — Unable to Continue</title>
-<style>
-  *{box-sizing:border-box;} body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-    background:#0b1220;color:#e6ebf5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
-  .card{text-align:center;padding:48px 40px;background:#121a2b;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.4);max-width:440px;}
-  .brand{font-size:22px;font-weight:800;letter-spacing:.5px;color:#f87171;margin-bottom:28px;}
-  h1{font-size:17px;font-weight:600;margin:0 0 10px;}
-  p{color:#94a3b8;font-size:13.5px;line-height:1.6;margin:0;}
-</style></head>
-<body>
-  <div class="card">
-    <div class="brand">MoneyWise</div>
-    <h1>We couldn't verify your location</h1>
-    <p>This link is only available to visitors in the United States. Your connection appears to originate from {$where}, so we're not able to continue — this protects both you and the offer from a potential IP mismatch.</p>
-  </div>
-</body></html>
+<title></title>
+</head>
+<body></body></html>
 HTML;
 }
 
@@ -130,7 +116,7 @@ if (!$isUs) {
         'valid' => false, 'redirected' => false, 'reason' => $geo ? 'non-us-ip' : 'geo-lookup-failed', 's2' => $s2,
     ]);
     header('Content-Type: text/html');
-    render_rejected($geo['country'] ?? null);
+    render_rejected();
     exit;
 }
 
