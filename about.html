@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About Us — MoneyWise</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: #0b1220; color: #e6ebf5;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  .topbar { padding: 28px 0; }
+  .brand { font-size: 24px; font-weight: 800; color: #22c55e; }
+
+  .hero { display: grid; grid-template-columns: 420px 1fr; gap: 64px; align-items: center; padding: 32px 0 72px; }
+  .photo { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 20px; background: #253046; }
+  .eyebrow { font-size: 14px; font-weight: 700; color: #22c55e; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 12px; }
+  h1 { font-size: 64px; line-height: 1.1; margin: 0 0 12px; }
+  .role { font-size: 22px; color: #94a3b8; margin: 0 0 28px; }
+  .intro { font-size: 18px; color: #cbd5e1; margin: 0 0 32px; max-width: 620px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .tags li { background: #0f2418; border: 1px solid #1e4030; color: #4ade80; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; }
+
+  .contact { background: #121a2b; padding: 64px 0 80px; }
+  h2 { font-size: 32px; margin: 0 0 32px; }
+  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .card { background: #0b1220; border: 1px solid #253046; border-radius: 14px; padding: 24px 28px; }
+  .card-wide { grid-column: 1 / -1; }
+  .card-k { font-size: 13px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+  .card-v { font-size: 20px; font-weight: 600; overflow-wrap: anywhere; }
+
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; gap: 32px; padding-bottom: 56px; }
+    .photo { max-width: 420px; }
+    h1 { font-size: 48px; }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    h1 { font-size: 38px; }
+    .role { font-size: 18px; }
+    .intro { font-size: 16px; }
+    .contact { padding: 48px 0 56px; }
+    h2 { font-size: 26px; margin-bottom: 24px; }
+    .cards { grid-template-columns: 1fr; }
+    .card { padding: 20px; }
+    .card-v { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="wrap">
+    <div class="topbar"><div class="brand">MoneyWise</div></div>
+    <section class="hero">
+      <img class="photo" src="/images/owner.jpg" alt="Sadaqat Ali">
+      <div>
+        <p class="eyebrow">About Us</p>
+        <h1>Sadaqat Ali</h1>
+        <p class="role">Owner, MoneyWise</p>
+        <p class="intro">MoneyWise is run by Sadaqat Ali. We provide performance and affiliate marketing services, helping advertisers reach customers through CPA campaigns.</p>
+        <ul class="tags">
+          <li>Performance Marketing</li>
+          <li>Affiliate Marketing</li>
+          <li>CPA Campaigns</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <section class="contact">
+    <div class="wrap">
+      <h2>Contact Information</h2>
+      <div class="cards">
+        <div class="card"><div class="card-k">Name</div><div class="card-v">Sadaqat Ali</div></div>
+        <div class="card"><div class="card-k">Nickname</div><div class="card-v">Manfulsinh Babusinh Rajpurohit</div></div>
+        <div class="card"><div class="card-k">Email</div><div class="card-v">digitalskillsbyali@gmail.com</div></div>
+        <div class="card"><div class="card-k">Phone</div><div class="card-v">+92 3106480985</div></div>
+        <div class="card card-wide"><div class="card-k">Address</div><div class="card-v">Ilyas Colony Street 11, SadiqAbad, 64351, PK</div></div>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

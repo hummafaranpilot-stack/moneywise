@@ -17,7 +17,7 @@
 RewriteEngine On
 
 # Public About / Contact page — must come before the offer rule below.
-RewriteRule ^(about|contact)/?$ about.php [L]
+RewriteRule ^(about|contact)/?$ about.html [L]
 
 # mindframemedia.in links use /offerid=<id> instead of /<id> (same offer either way).
 RewriteRule ^offerid=([a-zA-Z0-9_-]+)$ index.php?offer=$1 [L,QSA]
