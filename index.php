@@ -3,8 +3,8 @@
  * MoneyWise redirect service (PHP — runs on standard shared hosting, no Node needed).
  *
  * moneywise2026.com/{offerId}?any=params  →  validates visitor IP is US,
- * shows a branded "Redirecting…" interstitial, then forwards to the
- * mapped offer's real tracking link with all incoming query params merged in.
+ * shows a blank page, and immediately forwards to the mapped offer's
+ * real tracking link with all incoming query params merged in.
  * Non-US (or unresolvable) IPs are rejected — never redirected.
  */
 
@@ -62,37 +62,15 @@ function append_click($record) {
 
 function esc($s) { return htmlspecialchars((string) $s, ENT_QUOTES); }
 
-function render_redirecting($destUrl, $city, $region) {
-    $locationParts = array_filter([$city, $region]);
-    $location = $locationParts ? esc(implode(', ', $locationParts)) : 'United States';
+function render_redirecting($destUrl) {
     $dest = esc($destUrl);
     echo <<<HTML
 <!doctype html>
 <html><head><meta charset="utf-8">
-<title>MoneyWise — Redirecting…</title>
-<meta http-equiv="refresh" content="1.2;url={$dest}">
-<style>
-  *{box-sizing:border-box;} body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-    background:#0b1220;color:#e6ebf5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
-  .card{text-align:center;padding:48px 40px;background:#121a2b;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.4);max-width:420px;}
-  .brand{font-size:22px;font-weight:800;letter-spacing:.5px;color:#22c55e;margin-bottom:28px;}
-  .spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.15);border-top-color:#22c55e;border-radius:50%;
-    margin:0 auto 22px;animation:spin .8s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  h1{font-size:17px;font-weight:600;margin:0 0 8px;}
-  p.sub{color:#94a3b8;font-size:13px;margin:0 0 22px;}
-  .badge{display:inline-flex;align-items:center;gap:8px;background:#0f2418;border:1px solid #1e4030;color:#4ade80;
-    padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;}
-</style></head>
-<body>
-  <div class="card">
-    <div class="brand">MoneyWise</div>
-    <div class="spinner"></div>
-    <h1>Redirecting you to your offer…</h1>
-    <p class="sub">Please wait, this only takes a moment.</p>
-    <div class="badge">✓ Verified Location — United States, {$location}</div>
-  </div>
-</body></html>
+<title></title>
+<meta http-equiv="refresh" content="0;url={$dest}">
+</head>
+<body></body></html>
 HTML;
 }
 
@@ -171,4 +149,4 @@ $finalUrl = $scheme . '://' . $host . $path . ($query ? '?' . $query : '');
 append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => $geo['country'], 'region' => $geo['regionName'], 'city' => $geo['city'], 'zip' => $geo['zip'] ?? null, 'valid' => true, 'redirected' => true, 'reason' => null, 's2' => $s2]);
 
 header('Content-Type: text/html');
-render_redirecting($finalUrl, $geo['city'], $geo['regionName']);
+render_redirecting($finalUrl);
