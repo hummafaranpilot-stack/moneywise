@@ -298,15 +298,21 @@ let _offersCache = [];
 let _networksCache = [];
 let _editingOfferId = null;
 
-async function _populateOfferNetworkPicker(selectedName) {
+async function _populateOfferNetworkPicker(selectedName, selectedIdentity) {
   const sel = $('of-network-pick');
   if (!sel) return;
   try {
     const r = await fetch('networks-api.php');
     const all = r.ok ? await r.json() : [];
+    // Several networks can share a name (ClickDealer · David Jordan, ClickDealer · Rajpurohit),
+    // so the offer's network is found by name AND identity. If that fails, only trust the name
+    // when it is unambiguous; otherwise leave the picker unselected rather than show a wrong one.
+    const lc = s => (s || '').toLowerCase().trim();
+    const sameName = selectedName ? all.filter(n => lc(n.name) === lc(selectedName)) : [];
+    const match = sameName.find(n => lc(n.identity) === lc(selectedIdentity))
+      || (sameName.length === 1 ? sameName[0] : null);
     // Only enabled networks — plus, when editing, the offer's current network even if it was disabled since.
-    const current = (selectedName || '').toLowerCase();
-    _networksCache = all.filter(n => n.enabled !== false || (current && (n.name || '').toLowerCase() === current));
+    _networksCache = all.filter(n => n.enabled !== false || n === match);
     if (!_networksCache.length) {
       sel.innerHTML = '<option value="">— no networks yet — ask to add one —</option>';
       return;
@@ -314,10 +320,7 @@ async function _populateOfferNetworkPicker(selectedName) {
     sel.innerHTML = '<option value="">— select network —</option>'
       + _networksCache.map(n => '<option value="' + esc(n.id) + '">'
           + esc(n.name) + (n.identity ? ' · ' + esc(n.identity) : '') + '</option>').join('');
-    if (selectedName) {
-      const match = _networksCache.find(n => (n.name || '').toLowerCase() === selectedName.toLowerCase());
-      if (match) sel.value = match.id;
-    }
+    if (match) sel.value = match.id;
   } catch (_) { /* ignore */ }
 }
 
@@ -474,7 +477,7 @@ function renderCard(o, groupBadge) {
 function openOfferModal(offer) {
   _editingOfferId = offer ? offer.id : null;
   $('offer-modal-title').textContent = offer ? 'Edit Offer' : 'Add Offer';
-  _populateOfferNetworkPicker(offer && offer.network);
+  _populateOfferNetworkPicker(offer && offer.network, offer && offer.account);
   $('of-name').value = offer ? (offer.name || '') : '';
   $('of-id').value = offer ? (offer.id || '') : '';
   $('of-id').readOnly = !!offer;
