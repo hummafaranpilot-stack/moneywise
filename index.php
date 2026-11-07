@@ -87,8 +87,19 @@ HTML;
 $offerId = $_GET['offer'] ?? '';
 
 if ($offerId === '') {
-    header('Content-Type: text/plain');
-    echo 'Tracker is running.';
+    header('Content-Type: text/html');
+    echo <<<HTML
+<!doctype html>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Server is Running!</title>
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:#fff;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  h1{margin:0;padding:16px;font-size:32px;font-weight:700;text-align:center;}
+</style></head>
+<body><h1>Server is Running!</h1></body></html>
+HTML;
     exit;
 }
 

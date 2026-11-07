@@ -169,6 +169,7 @@ no_cache_headers();
       <select id="of-domain">
         <option value="moneywise2026.com">moneywise2026.com</option>
         <option value="mindframemedia.in">mindframemedia.in</option>
+        <option value="risingmax.net">risingmax.net</option>
       </select>
     </div>
     <div class="field">
@@ -286,13 +287,13 @@ no_cache_headers();
 </div>
 
 <script>
-// Both domains serve the same site (mindframemedia.in is parked on
-// moneywise2026.com), so an offer's link works on either — the saved domain
-// just decides which one the admin is handed.
+// All domains serve the same site (the others are parked on moneywise2026.com),
+// so an offer's link works on any of them — the saved domain just decides which
+// one the admin is handed.
 const DEFAULT_DOMAIN = 'moneywise2026.com';
 function offerDomain(o) { return (o && o.domain) || DEFAULT_DOMAIN; }
-// mindframemedia.in links read /offerid=<id>; .htaccess routes both forms to the same offer.
-function offerPath(o, id) { return offerDomain(o) + (offerDomain(o) === 'mindframemedia.in' ? '/offerid=' : '/') + id; }
+// Parked-domain links read /offerid=<id>; .htaccess routes both forms to the same offer.
+function offerPath(o, id) { return offerDomain(o) + (offerDomain(o) === DEFAULT_DOMAIN ? '/' : '/offerid=') + id; }
 function offerLink(id) { return 'https://' + offerPath(_offersCache.find(x => x.id === id), id); }
 let _offersCache = [];
 let _networksCache = [];
