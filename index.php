@@ -108,6 +108,31 @@ $dest = $map[$offerId] ?? null;
 $ip = client_ip();
 // Our click id for this visit (traffic link ?s2=...); postbacks are matched back to it.
 $s2 = (string) ($_GET['s2'] ?? '');
+// Params we add or overwrite on the way to the destination.
+$forward = [];
+
+// A param that carries a real value — not empty and not an unreplaced macro like "{fbclid}".
+function real_param($name) {
+    $v = (string) ($_GET[$name] ?? '');
+    return ($v === '' || $v[0] === '{') ? '' : $v;
+}
+
+// Mobidea only: it needs a click id in pub_click_id, and returns it in the postback
+// as s2. When the traffic link is missing either one, fill both with the same id —
+// whichever was sent, else Facebook's fbclid, else one generated here.
+$offer = null;
+foreach (db_read('offers.json', []) as $o) {
+    if (($o['id'] ?? '') === $offerId) { $offer = $o; break; }
+}
+if ($offer && strtolower(trim($offer['network'] ?? '')) === 'mobidea') {
+    $pubClickId = real_param('pub_click_id');
+    $ourId = real_param('s2');
+    if ($pubClickId === '' || $ourId === '') {
+        $clickId = $pubClickId ?: $ourId ?: real_param('fbclid') ?: bin2hex(random_bytes(8));
+        if ($pubClickId === '') $forward['pub_click_id'] = $clickId;
+        if ($ourId === '') $forward['s2'] = $s2 = $clickId;
+    }
+}
 
 if (!$dest) {
     append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => null, 'region' => null, 'city' => null, 'zip' => null, 'valid' => false, 'redirected' => false, 'reason' => 'offer-not-found', 's2' => $s2]);
@@ -136,7 +161,7 @@ $parts = parse_url($dest);
 parse_str($parts['query'] ?? '', $destParams);
 $incoming = $_GET;
 unset($incoming['offer']);
-$merged = array_merge($destParams, $incoming);
+$merged = array_merge($destParams, $incoming, $forward);
 $query = http_build_query($merged);
 $scheme = $parts['scheme'] ?? 'https';
 $host = $parts['host'] ?? '';
