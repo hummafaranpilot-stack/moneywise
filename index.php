@@ -87,18 +87,29 @@ HTML;
 $offerId = $_GET['offer'] ?? '';
 
 if ($offerId === '') {
+    // Each parked domain shows its own text on the bare root page.
+    $host = preg_replace('/^www\.|:\d+$/', '', strtolower($_SERVER['HTTP_HOST'] ?? ''));
+    // Only risingmax.net shows text; every other domain gets a blank page.
+    $rootTexts = [
+        'risingmax.net' => 'Server is Running!',
+    ];
+    $rootText = esc($rootTexts[$host] ?? '');
     header('Content-Type: text/html');
+    if ($rootText === '') {
+        render_rejected(); // same blank page
+        exit;
+    }
     echo <<<HTML
 <!doctype html>
 <html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Server is Running!</title>
+<title>{$rootText}</title>
 <style>
   body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
     background:#fff;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
   h1{margin:0;padding:16px;font-size:32px;font-weight:700;text-align:center;}
 </style></head>
-<body><h1>Server is Running!</h1></body></html>
+<body><h1>{$rootText}</h1></body></html>
 HTML;
     exit;
 }
