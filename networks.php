@@ -18,7 +18,7 @@ no_cache_headers();
     background: #f8fafc; color: #0f172a;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
-  .topbar { max-width: 1400px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .topbar { max-width: none; margin: 0 auto 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .brand { font-size: 22px; font-weight: 800; color: #16a34a; }
   .topbar-right { display: flex; align-items: center; gap: 10px; }
   .nav-link { color: #475569; font-size: 13.5px; font-weight: 600; text-decoration: none; padding: 9px 14px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; }
@@ -27,13 +27,13 @@ no_cache_headers();
     background: #16a34a; color: #fff; border: none; font-weight: 700;
     padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 13.5px;
   }
-  .toolbar { max-width: 1400px; margin: 0 auto 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .toolbar { max-width: none; margin: 0 auto 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .toolbar input { flex: 1; min-width: 220px; max-width: 360px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; background: #fff; }
   .count { font-size: 12.5px; color: #64748b; }
 
-  .table-wrap { max-width: 1400px; margin: 0 auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow-x: auto; }
+  .table-wrap { max-width: none; margin: 0 auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 11px 14px; text-align: left; font-size: 13px; white-space: nowrap; }
+  th, td { padding: 11px 12px; text-align: left; font-size: 13px; white-space: nowrap; }
   th { background: #f8fafc; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #e2e8f0; }
   tbody tr:not(:last-child) td { border-bottom: 1px solid #f1f5f9; }
   tbody tr:hover { background: #f8fafc; }
@@ -289,7 +289,7 @@ function render() {
     const st = (n.status || '').toLowerCase();
     const stClass = ['approved', 'pending', 'rejected'].includes(st) ? 'st-' + st : 'st-other';
     const tg = (n.telegram || '').replace(/^@/, '');
-    const contact = [n.email ? esc(n.email) : '', tg ? '@' + esc(tg) : ''].filter(Boolean).join(' · ');
+    const contact = [n.email ? esc(n.email) : '', tg ? '@' + esc(tg) : ''].filter(Boolean).join('<br>');
     return `
       <tr class="${on ? '' : 'net-disabled'}">
         <td class="keep"><button class="toggle ${toggleClass}" onclick="cycleState('${esc(n.id)}')" title="${NEXT_LABEL[state]}"><span class="toggle-knob"></span></button>${stateLabel}</td>
