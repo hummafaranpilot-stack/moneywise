@@ -147,10 +147,6 @@ no_cache_headers();
         <label class="field-label" for="nw-email">Account Email</label>
         <input id="nw-email" type="text">
       </div>
-      <div class="field">
-        <label class="field-label" for="nw-telegram">Telegram</label>
-        <input id="nw-telegram" type="text" placeholder="@username">
-      </div>
     </div>
     <div class="row-2">
       <div class="field">
@@ -160,22 +156,6 @@ no_cache_headers();
       <div class="field">
         <label class="field-label" for="nw-tracker-domain">Tracker Domain <span class="muted">(optional)</span></label>
         <input id="nw-tracker-domain" type="text" placeholder="e.g. risingmax.net">
-      </div>
-    </div>
-    <div class="row-2">
-      <div class="field">
-        <label class="field-label" for="nw-our-tracker">Our Tracker</label>
-        <input id="nw-our-tracker" type="text">
-      </div>
-    </div>
-    <div class="row-2">
-      <div class="field">
-        <label class="field-label" for="nw-methods">Payment Methods</label>
-        <input id="nw-methods" type="text">
-      </div>
-      <div class="field">
-        <label class="field-label" for="nw-manager">Manager</label>
-        <input id="nw-manager" type="text">
       </div>
     </div>
     <div class="row-2">
@@ -254,7 +234,7 @@ const DEL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 function render() {
   const q = $('search').value.trim().toLowerCase();
   const list = _networks
-    .filter(n => !q || [n.name, n.identity, n.ourTracker, n.paymentTerms, n.email, n.telegram, n.fbPage, n.trackerDomain, n.notes]
+    .filter(n => !q || [n.name, n.identity, n.paymentTerms, n.email, n.fbPage, n.trackerDomain, n.notes]
       .some(v => (v || '').toLowerCase().includes(q)))
     // Enabled first, then A→Z by name and identity.
     .sort((a, b) => (STATE_RANK[netState(b)] - STATE_RANK[netState(a)])
@@ -284,8 +264,7 @@ function render() {
     }
     const st = (n.status || '').toLowerCase();
     const stClass = ['approved', 'pending', 'rejected'].includes(st) ? 'st-' + st : 'st-other';
-    const tg = (n.telegram || '').replace(/^@/, '');
-    const contact = [n.email ? esc(n.email) : '', tg ? '@' + esc(tg) : ''].filter(Boolean).join('<br>');
+    const contact = n.email ? esc(n.email) : '';
     return `
       <tr class="${on ? '' : 'net-disabled'}">
         <td class="keep"><button class="toggle ${toggleClass}" onclick="cycleState('${esc(n.id)}')" title="${NEXT_LABEL[state]}"><span class="toggle-knob"></span></button>${stateLabel}</td>
@@ -314,12 +293,8 @@ function openNetworkModal(n) {
   $('nw-terms').value = n ? (n.paymentTerms || '') : '';
   $('nw-payout').value = n ? (n.minPayout || '') : '';
   $('nw-email').value = n ? (n.email || '') : '';
-  $('nw-telegram').value = n ? (n.telegram || '') : '';
   $('nw-fb-page').value = n ? (n.fbPage || '') : '';
   $('nw-tracker-domain').value = n ? (n.trackerDomain || '') : '';
-  $('nw-our-tracker').value = n ? (n.ourTracker || '') : '';
-  $('nw-methods').value = n ? (n.paymentMethods || '') : '';
-  $('nw-manager').value = n ? (n.manager || '') : '';
   $('nw-status').value = n && ['pending', 'rejected'].includes(n.status) ? n.status : 'approved';
   $('nw-state').value = n ? netState(n) : 'active';
   $('nw-pending-since').value = (n && n.pendingSince) || todayYmd();
@@ -346,12 +321,8 @@ async function submitNetworkForm() {
     paymentTerms: $('nw-terms').value,
     minPayout: $('nw-payout').value,
     email: $('nw-email').value,
-    telegram: $('nw-telegram').value,
     fbPage: $('nw-fb-page').value,
     trackerDomain: $('nw-tracker-domain').value,
-    ourTracker: $('nw-our-tracker').value,
-    paymentMethods: $('nw-methods').value,
-    manager: $('nw-manager').value,
     status: $('nw-status').value,
     enabled: $('nw-state').value !== 'inactive',
     pendingSince: $('nw-state').value === 'pending' ? ($('nw-pending-since').value || todayYmd()) : '',
