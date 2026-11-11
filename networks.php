@@ -36,6 +36,9 @@ no_cache_headers();
   th, td { padding: 11px 12px; text-align: left; font-size: 13px; white-space: nowrap; }
   th { background: #f8fafc; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #e2e8f0; }
   tbody tr:not(:last-child) td { border-bottom: 1px solid #f1f5f9; }
+  .meta-line { display: flex; align-items: center; gap: 7px; line-height: 1.5; }
+  .meta-line + .meta-line { margin-top: 4px; }
+  .meta-icon { width: 15px; height: 15px; flex: none; }
   th + th, td + td { border-left: 1px solid #eef2f6; }
   tbody tr:hover { background: #f8fafc; }
   tr.net-disabled td:not(.keep) { opacity: 0.5; }
@@ -109,10 +112,10 @@ no_cache_headers();
     <thead>
       <tr>
         <th>State</th><th>Name</th><th>Identity</th><th>Payment Terms</th><th>Min Payout</th>
-        <th>Contact</th><th>FB Page</th><th>Tracker Domain</th><th>Notes</th><th></th>
+        <th>Contact</th><th>FB Page / Tracker</th><th>Notes</th><th></th>
       </tr>
     </thead>
-    <tbody id="rows"><tr><td colspan="10" class="empty">Loading…</td></tr></tbody>
+    <tbody id="rows"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody>
   </table>
 </div>
 
@@ -222,6 +225,8 @@ async function loadNetworks() {
 }
 
 const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+const FB_ICON = '<svg class="meta-icon fb" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#1877F2"/><path fill="#fff" d="M13.4 19v-6h2l.3-2.4h-2.3V9.1c0-.7.2-1.2 1.2-1.2h1.2V5.8c-.2 0-1-.1-1.8-.1-1.8 0-3 1.1-3 3.1v1.8h-2V13h2v6h2.4z"/></svg>';
+const TRACKER_ICON = '<svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
 const DEL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
 
 function render() {
@@ -239,7 +244,7 @@ function render() {
   $('count').textContent = _networks.length + ' networks · ' + activeCount + ' active · ' + pendingCount + ' pending';
 
   if (!list.length) {
-    $('rows').innerHTML = '<tr><td colspan="10" class="empty">' + (q ? 'No networks match.' : 'No networks yet — click "+ Add Network".') + '</td></tr>';
+    $('rows').innerHTML = '<tr><td colspan="9" class="empty">' + (q ? 'No networks match.' : 'No networks yet — click "+ Add Network".') + '</td></tr>';
     return;
   }
 
@@ -264,8 +269,10 @@ function render() {
         <td>${n.paymentTerms ? esc(n.paymentTerms) : '<span class="muted">—</span>'}</td>
         <td class="payout">${n.minPayout ? esc(n.minPayout) : '<span class="muted">—</span>'}</td>
         <td>${contact || '<span class="muted">—</span>'}</td>
-        <td>${n.fbPage ? esc(n.fbPage) : '<span class="muted">—</span>'}</td>
-        <td>${n.trackerDomain ? esc(n.trackerDomain) : '<span class="muted">—</span>'}</td>
+        <td>${(n.fbPage || n.trackerDomain)
+          ? (n.fbPage ? '<div class="meta-line" title="FB Page">' + FB_ICON + esc(n.fbPage) + '</div>' : '')
+            + (n.trackerDomain ? '<div class="meta-line" title="Tracker Domain">' + TRACKER_ICON + esc(n.trackerDomain) + '</div>' : '')
+          : '<span class="muted">—</span>'}</td>
         <td class="notes">${n.notes ? esc(n.notes).replace(/\n/g, '<br>') : '<span class="muted">—</span>'}</td>
         <td class="keep"><div class="actions">
           <button onclick="editNetwork('${esc(n.id)}')" title="Edit">${EDIT_ICON}</button>
