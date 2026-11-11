@@ -108,10 +108,10 @@ no_cache_headers();
     <thead>
       <tr>
         <th>State</th><th>Name</th><th>Identity</th><th>Payment Terms</th><th>Min Payout</th>
-        <th>Owner Tracker</th><th>Status</th><th>Contact</th><th>FB Page</th><th>Tracker Domain</th><th>Notes</th><th></th>
+        <th>Status</th><th>Contact</th><th>FB Page</th><th>Tracker Domain</th><th>Notes</th><th></th>
       </tr>
     </thead>
-    <tbody id="rows"><tr><td colspan="12" class="empty">Loading…</td></tr></tbody>
+    <tbody id="rows"><tr><td colspan="11" class="empty">Loading…</td></tr></tbody>
   </table>
 </div>
 
@@ -163,10 +163,6 @@ no_cache_headers();
       </div>
     </div>
     <div class="row-2">
-      <div class="field">
-        <label class="field-label" for="nw-owner-tracker">Owner Tracker</label>
-        <input id="nw-owner-tracker" type="text" placeholder="e.g. Everflow">
-      </div>
       <div class="field">
         <label class="field-label" for="nw-our-tracker">Our Tracker</label>
         <input id="nw-our-tracker" type="text">
@@ -258,7 +254,7 @@ const DEL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 function render() {
   const q = $('search').value.trim().toLowerCase();
   const list = _networks
-    .filter(n => !q || [n.name, n.identity, n.ownerTracker, n.ourTracker, n.paymentTerms, n.email, n.telegram, n.fbPage, n.trackerDomain, n.notes]
+    .filter(n => !q || [n.name, n.identity, n.ourTracker, n.paymentTerms, n.email, n.telegram, n.fbPage, n.trackerDomain, n.notes]
       .some(v => (v || '').toLowerCase().includes(q)))
     // Enabled first, then A→Z by name and identity.
     .sort((a, b) => (STATE_RANK[netState(b)] - STATE_RANK[netState(a)])
@@ -270,7 +266,7 @@ function render() {
   $('count').textContent = _networks.length + ' networks · ' + activeCount + ' active · ' + pendingCount + ' pending';
 
   if (!list.length) {
-    $('rows').innerHTML = '<tr><td colspan="12" class="empty">' + (q ? 'No networks match.' : 'No networks yet — click "+ Add Network".') + '</td></tr>';
+    $('rows').innerHTML = '<tr><td colspan="11" class="empty">' + (q ? 'No networks match.' : 'No networks yet — click "+ Add Network".') + '</td></tr>';
     return;
   }
 
@@ -297,7 +293,6 @@ function render() {
         <td>${n.identity ? esc(n.identity) : '<span class="muted">—</span>'}</td>
         <td>${n.paymentTerms ? esc(n.paymentTerms) : '<span class="muted">—</span>'}</td>
         <td class="payout">${n.minPayout ? esc(n.minPayout) : '<span class="muted">—</span>'}</td>
-        <td>${n.ownerTracker ? esc(n.ownerTracker) : '<span class="muted">—</span>'}</td>
         <td><span class="pill ${stClass}">${esc(n.status || '—')}</span></td>
         <td>${contact || '<span class="muted">—</span>'}</td>
         <td>${n.fbPage ? esc(n.fbPage) : '<span class="muted">—</span>'}</td>
@@ -322,7 +317,6 @@ function openNetworkModal(n) {
   $('nw-telegram').value = n ? (n.telegram || '') : '';
   $('nw-fb-page').value = n ? (n.fbPage || '') : '';
   $('nw-tracker-domain').value = n ? (n.trackerDomain || '') : '';
-  $('nw-owner-tracker').value = n ? (n.ownerTracker || '') : '';
   $('nw-our-tracker').value = n ? (n.ourTracker || '') : '';
   $('nw-methods').value = n ? (n.paymentMethods || '') : '';
   $('nw-manager').value = n ? (n.manager || '') : '';
@@ -355,7 +349,6 @@ async function submitNetworkForm() {
     telegram: $('nw-telegram').value,
     fbPage: $('nw-fb-page').value,
     trackerDomain: $('nw-tracker-domain').value,
-    ownerTracker: $('nw-owner-tracker').value,
     ourTracker: $('nw-our-tracker').value,
     paymentMethods: $('nw-methods').value,
     manager: $('nw-manager').value,
