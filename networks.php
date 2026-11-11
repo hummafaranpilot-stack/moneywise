@@ -44,6 +44,7 @@ no_cache_headers();
   tr.net-disabled td:not(.keep) { opacity: 0.5; }
   td.notes { white-space: normal; min-width: 180px; max-width: 280px; color: #475569; font-size: 12.5px; line-height: 1.45; }
   .net-name { font-weight: 700; }
+  .net-dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 8px; vertical-align: -1px; }
   .muted { color: #94a3b8; }
   .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
   .st-approved { background: #f0fdf4; color: #166534; }
@@ -151,6 +152,10 @@ no_cache_headers();
         <label class="field-label" for="nw-email">Account Email</label>
         <input id="nw-email" type="text">
       </div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="nw-color">Color <span class="muted">(shows on this network's offer cards)</span></label>
+      <input id="nw-color" type="color" style="width:64px;height:34px;padding:2px;">
     </div>
     <div class="row-2">
       <div class="field">
@@ -264,7 +269,7 @@ function render() {
     return `
       <tr class="${on ? '' : 'net-disabled'}">
         <td class="keep"><button class="toggle ${toggleClass}" onclick="cycleState('${esc(n.id)}')" title="${NEXT_LABEL[state]}"><span class="toggle-knob"></span></button>${stateLabel}</td>
-        <td class="net-name">${esc(n.name)}</td>
+        <td class="net-name"><span class="net-dot" style="background:${esc(n.color || '#94a3b8')};"></span>${esc(n.name)}</td>
         <td>${n.identity ? esc(n.identity) : '<span class="muted">—</span>'}</td>
         <td>${n.paymentTerms ? esc(n.paymentTerms) : '<span class="muted">—</span>'}</td>
         <td class="payout">${n.minPayout ? esc(n.minPayout) : '<span class="muted">—</span>'}</td>
@@ -291,6 +296,10 @@ function openNetworkModal(n) {
   $('nw-payout').value = n ? (n.minPayout || '') : '';
   $('nw-email').value = n ? (n.email || '') : '';
   $('nw-fb-page').value = n ? (n.fbPage || '') : '';
+  // New network: leave the color for the server to pick an unused one, unless the user changes it.
+  $('nw-color').value = (n && n.color) || '#94a3b8';
+  $('nw-color').dataset.touched = '';
+  $('nw-color').oninput = () => { $('nw-color').dataset.touched = '1'; };
   $('nw-tracker-domain').value = n ? (n.trackerDomain || '') : '';
   $('nw-state').value = n ? netState(n) : 'active';
   $('nw-pending-since').value = (n && n.pendingSince) || todayYmd();
@@ -318,6 +327,7 @@ async function submitNetworkForm() {
     minPayout: $('nw-payout').value,
     email: $('nw-email').value,
     fbPage: $('nw-fb-page').value,
+    ...(_editingId || $('nw-color').dataset.touched ? { color: $('nw-color').value } : {}),
     trackerDomain: $('nw-tracker-domain').value,
     enabled: $('nw-state').value !== 'inactive',
     pendingSince: $('nw-state').value === 'pending' ? ($('nw-pending-since').value || todayYmd()) : '',

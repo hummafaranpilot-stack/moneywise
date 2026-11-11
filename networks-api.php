@@ -37,7 +37,47 @@ function slugify($s) {
 // Only these fields can be set from the Networks page.
 const NETWORK_FIELDS = ['name', 'identity', 'email', 'telegram', 'ourTracker', 'ownerTracker', 'status',
                         'paymentTerms', 'minPayout', 'paymentMethods', 'manager', 'notes', 'enabled', 'pendingSince',
-                        'fbPage', 'trackerDomain'];
+                        'fbPage', 'trackerDomain', 'color'];
+
+// Each network gets its own color (used on the Offers page cards). Picked from this
+// list in order; once it runs out, further colors are spread around the color wheel.
+const NETWORK_COLORS = ['#2563eb', '#16a34a', '#dc2626', '#d97706', '#7c3aed', '#0891b2', '#db2777',
+                        '#65a30d', '#ea580c', '#4f46e5', '#0d9488', '#c026d3', '#b45309', '#0284c7',
+                        '#be123c', '#15803d', '#9333ea', '#a16207', '#1d4ed8', '#e11d48', '#047857',
+                        '#6d28d9', '#c2410c', '#475569'];
+
+function hsl_hex($h, $s, $l) {
+    $s /= 100; $l /= 100;
+    $f = function ($n) use ($h, $s, $l) {
+        $k = fmod($n + $h / 30, 12);
+        $c = $l - $s * min($l, 1 - $l) * max(-1, min($k - 3, 9 - $k, 1));
+        return str_pad(dechex((int) round($c * 255)), 2, '0', STR_PAD_LEFT);
+    };
+    return '#' . $f(0) . $f(8) . $f(4);
+}
+
+function unused_color($used) {
+    foreach (NETWORK_COLORS as $c) if (!in_array($c, $used, true)) return $c;
+    for ($i = 0; ; $i++) {
+        $c = hsl_hex(fmod($i * 137.508, 360), 65, 42);
+        if (!in_array($c, $used, true)) return $c;
+    }
+}
+
+// Give every network that has no color yet one no other network uses. Returns true if any changed.
+function assign_colors(&$networks) {
+    $used = [];
+    foreach ($networks as $n) if (!empty($n['color'])) $used[] = strtolower($n['color']);
+    $changed = false;
+    foreach ($networks as &$n) {
+        if (!empty($n['color'])) continue;
+        $n['color'] = unused_color($used);
+        $used[] = $n['color'];
+        $changed = true;
+    }
+    unset($n);
+    return $changed;
+}
 
 function pick_fields($body) {
     $out = [];
@@ -48,11 +88,17 @@ function pick_fields($body) {
     // "Active but pending": pendingSince holds the YYYY-MM-DD it was set; only valid on an enabled network.
     if (isset($out['pendingSince']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $out['pendingSince'])) $out['pendingSince'] = '';
     if (($out['enabled'] ?? true) === false) $out['pendingSince'] = '';
+    if (isset($out['color'])) {
+        $out['color'] = strtolower($out['color']);
+        if (!preg_match('/^#[0-9a-f]{6}$/', $out['color'])) unset($out['color']);
+    }
     return $out;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $networks = array_values(array_filter(load_networks(), fn($n) => empty($n['deleted'])));
+    $all = load_networks();
+    if (assign_colors($all)) db_write(NETWORKS_FILE, $all);
+    $networks = array_values(array_filter($all, fn($n) => empty($n['deleted'])));
 
     if (!empty($_GET['raw'])) {
         echo json_encode($networks);
@@ -86,6 +132,7 @@ if ($action === 'create') {
                       'fbPage' => '', 'trackerDomain' => ''];
     $new['id'] = slugify($new['name'] . ' ' . $new['identity']) . '-' . substr(bin2hex(random_bytes(2)), 0, 4);
     $new['createdAt'] = gmdate('c');
+    if (empty($new['color'])) $new['color'] = unused_color(array_map(fn($n) => strtolower($n['color'] ?? ''), $networks));
     $networks[] = $new;
     db_write(NETWORKS_FILE, $networks);
     echo json_encode($new);

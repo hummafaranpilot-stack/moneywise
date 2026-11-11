@@ -47,6 +47,11 @@ no_cache_headers();
   }
   .ofc-name { font-size: 15px; font-weight: 700; }
   .ofc-sub { font-size: 11.5px; color: #64748b; margin-top: 2px; }
+  /* Network ribbon: starts at the card's left edge, notched on the right, in the network's color. */
+  .ofc-ribbon { align-self: flex-start; margin: -4px 0 -2px -16px; padding: 4px 22px 4px 16px; color: #fff;
+    font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
+    max-width: calc(100% + 16px); overflow: hidden; text-overflow: ellipsis;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%); }
   .ofc-payout {
     background: #16a34a; color: #fff; border: none; font-weight: 700;
     padding: 5px 12px; border-radius: 999px; font-size: 12.5px; cursor: pointer; align-self: flex-start;
@@ -341,16 +346,20 @@ function onOfferNetworkPick() {
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function $(id) { return document.getElementById(id); }
 
-const PALETTE = ['#16a34a','#2563eb','#dc2626','#d97706','#7c3aed','#0891b2','#db2777'];
-function colorFor(id) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return PALETTE[h % PALETTE.length];
+
+// Network colors, so each offer card shows the color of its network (name + identity).
+let _networkColorList = [];
+function networkColor(o) {
+  const lc = v => (v || '').toLowerCase().trim();
+  const sameName = _networkColorList.filter(n => lc(n.name) === lc(o.network));
+  const n = sameName.find(x => lc(x.identity) === lc(o.account)) || (sameName.length === 1 ? sameName[0] : null);
+  return n && n.color ? n.color : '#94a3b8';
 }
 
 async function loadOffers() {
-  const r = await fetch('offers-api.php');
+  const [r, nr] = await Promise.all([fetch('offers-api.php'), fetch('networks-api.php').catch(() => null)]);
   _offersCache = await r.json();
+  if (nr && nr.ok) _networkColorList = await nr.json().catch(() => []);
   render();
 }
 
@@ -422,15 +431,15 @@ function renderCard(o, groupBadge) {
     : '<span class="ofc-restrict empty">No restrictions</span>';
   const initials = (o.name || '?').trim().slice(0, 2).toUpperCase();
   const tg = (o.accountTelegram || '').replace(/^@/, '');
-  const accent = colorFor(o.id);
+  const accent = networkColor(o);
   const disabled = o.enabled === false;
   return `
-    <div class="offer-card${disabled ? ' offer-disabled' : ''}">
+    <div class="offer-card${disabled ? ' offer-disabled' : ''}" style="border-top:4px solid ${accent};">
+      ${o.network ? '<div class="ofc-ribbon" style="background:' + accent + ';">' + esc(o.network) + (o.account ? ' · ' + esc(o.account) : '') + '</div>' : ''}
       <div class="ofc-head">
         <div class="ofc-logo" style="background:${accent};">${esc(initials)}</div>
         <div style="flex:1;min-width:0;">
           <div class="ofc-name">${esc(o.name)}${groupBadge || ''}</div>
-          ${o.network ? '<div class="ofc-sub">' + esc(o.network) + '</div>' : ''}
         </div>
         <button class="ofc-payout">${esc(o.payout || 'Set CPA')}</button>
       </div>
