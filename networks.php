@@ -38,6 +38,7 @@ no_cache_headers();
   tbody tr:not(:last-child) td { border-bottom: 1px solid #f1f5f9; }
   tbody tr:hover { background: #f8fafc; }
   tr.net-disabled td:not(.keep) { opacity: 0.5; }
+  td.notes { white-space: normal; min-width: 180px; max-width: 280px; color: #475569; font-size: 12.5px; line-height: 1.45; }
   .net-name { font-weight: 700; }
   .muted { color: #94a3b8; }
   .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
@@ -47,10 +48,17 @@ no_cache_headers();
   .st-other    { background: #f1f5f9; color: #475569; }
   .payout { font-weight: 700; font-variant-numeric: tabular-nums; }
 
-  .toggle { position: relative; width: 34px; height: 20px; border: none; border-radius: 999px; cursor: pointer; padding: 0; background: #cbd5e1; vertical-align: middle; }
+  /* 3-way switch: left = not active, middle = active but pending, right = active */
+  .toggle { position: relative; width: 48px; height: 20px; border: none; border-radius: 999px; cursor: pointer; padding: 0; background: #cbd5e1; vertical-align: middle; }
   .toggle.on { background: #16a34a; }
+  .toggle.pending { background: #f59e0b; }
   .toggle-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.16s; }
-  .toggle.on .toggle-knob { transform: translateX(14px); }
+  .toggle.pending .toggle-knob { transform: translateX(14px); }
+  .toggle.on .toggle-knob { transform: translateX(28px); }
+  .state-label { display: block; font-size: 10.5px; font-weight: 700; margin-top: 4px; white-space: nowrap; }
+  .state-label.on { color: #16a34a; }
+  .state-label.pending { color: #b45309; }
+  .state-label.off { color: #94a3b8; }
 
   .actions { display: flex; gap: 4px; }
   .actions button { background: #fff; border: 1px solid #e2e8f0; cursor: pointer; padding: 6px; border-radius: 7px; color: #64748b; display: inline-flex; }
@@ -91,7 +99,7 @@ no_cache_headers();
 </div>
 
 <div class="toolbar">
-  <input id="search" type="search" placeholder="Search name, identity, tracker…" oninput="render()">
+  <input id="search" type="search" placeholder="Search name, identity, FB page, notes…" oninput="render()">
   <span class="count" id="count"></span>
 </div>
 
@@ -99,11 +107,11 @@ no_cache_headers();
   <table>
     <thead>
       <tr>
-        <th>Enabled</th><th>Name</th><th>Identity</th><th>Payment Terms</th><th>Min Payout</th>
-        <th>Owner Tracker</th><th>Status</th><th>Contact</th><th></th>
+        <th>State</th><th>Name</th><th>Identity</th><th>Payment Terms</th><th>Min Payout</th>
+        <th>Owner Tracker</th><th>Status</th><th>Contact</th><th>FB Page</th><th>Tracker Domain</th><th>Notes</th><th></th>
       </tr>
     </thead>
-    <tbody id="rows"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody>
+    <tbody id="rows"><tr><td colspan="12" class="empty">Loading…</td></tr></tbody>
   </table>
 </div>
 
@@ -146,6 +154,16 @@ no_cache_headers();
     </div>
     <div class="row-2">
       <div class="field">
+        <label class="field-label" for="nw-fb-page">FB Page <span class="muted">(optional)</span></label>
+        <input id="nw-fb-page" type="text" placeholder="Page used to run ads on this network">
+      </div>
+      <div class="field">
+        <label class="field-label" for="nw-tracker-domain">Tracker Domain <span class="muted">(optional)</span></label>
+        <input id="nw-tracker-domain" type="text" placeholder="e.g. risingmax.net">
+      </div>
+    </div>
+    <div class="row-2">
+      <div class="field">
         <label class="field-label" for="nw-owner-tracker">Owner Tracker</label>
         <input id="nw-owner-tracker" type="text" placeholder="e.g. Everflow">
       </div>
@@ -174,9 +192,17 @@ no_cache_headers();
         </select>
       </div>
       <div class="field">
-        <label class="field-label">&nbsp;</label>
-        <label class="check"><input id="nw-enabled" type="checkbox" style="width:auto;"> Enabled</label>
+        <label class="field-label" for="nw-state">State</label>
+        <select id="nw-state" onchange="onStateChange()">
+          <option value="active">Active</option>
+          <option value="pending">Active but pending</option>
+          <option value="inactive">Not active</option>
+        </select>
       </div>
+    </div>
+    <div class="field" id="nw-pending-wrap" style="display:none;">
+      <label class="field-label" for="nw-pending-since">Pending since</label>
+      <input id="nw-pending-since" type="date">
     </div>
     <div class="field">
       <label class="field-label" for="nw-notes">Notes</label>
@@ -197,6 +223,22 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
 function $(id) { return document.getElementById(id); }
 // A network without an "enabled" flag was never disabled.
 function isEnabled(n) { return n.enabled !== false; }
+// 'active' | 'pending' (active but pending, since n.pendingSince) | 'inactive'
+function netState(n) { return !isEnabled(n) ? 'inactive' : (n.pendingSince ? 'pending' : 'active'); }
+const STATE_RANK = { active: 2, pending: 1, inactive: 0 };
+function todayYmd() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function fmtDate(ymd) {
+  const [y, m, d] = ymd.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function daysSince(ymd) {
+  const [y, m, d] = ymd.split('-').map(Number);
+  const now = new Date();
+  return Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(y, m - 1, d)) / 86400000);
+}
 
 async function api(body) {
   const r = await fetch('networks-api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -216,30 +258,41 @@ const DEL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 function render() {
   const q = $('search').value.trim().toLowerCase();
   const list = _networks
-    .filter(n => !q || [n.name, n.identity, n.ownerTracker, n.ourTracker, n.paymentTerms, n.email, n.telegram]
+    .filter(n => !q || [n.name, n.identity, n.ownerTracker, n.ourTracker, n.paymentTerms, n.email, n.telegram, n.fbPage, n.trackerDomain, n.notes]
       .some(v => (v || '').toLowerCase().includes(q)))
     // Enabled first, then A→Z by name and identity.
-    .sort((a, b) => (isEnabled(b) - isEnabled(a))
+    .sort((a, b) => (STATE_RANK[netState(b)] - STATE_RANK[netState(a)])
       || (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
       || (a.identity || '').localeCompare(b.identity || '', undefined, { sensitivity: 'base' }));
 
-  const enabledCount = _networks.filter(isEnabled).length;
-  $('count').textContent = _networks.length + ' networks · ' + enabledCount + ' enabled';
+  const activeCount = _networks.filter(n => netState(n) === 'active').length;
+  const pendingCount = _networks.filter(n => netState(n) === 'pending').length;
+  $('count').textContent = _networks.length + ' networks · ' + activeCount + ' active · ' + pendingCount + ' pending';
 
   if (!list.length) {
-    $('rows').innerHTML = '<tr><td colspan="9" class="empty">' + (q ? 'No networks match.' : 'No networks yet — click "+ Add Network".') + '</td></tr>';
+    $('rows').innerHTML = '<tr><td colspan="12" class="empty">' + (q ? 'No networks match.' : 'No networks yet — click "+ Add Network".') + '</td></tr>';
     return;
   }
 
   $('rows').innerHTML = list.map(n => {
     const on = isEnabled(n);
+    const state = netState(n);
+    const toggleClass = state === 'active' ? 'on' : state === 'pending' ? 'pending' : '';
+    const NEXT_LABEL = { active: 'Active — click for Active but pending', pending: 'Active but pending — click for Not active', inactive: 'Not active — click for Active' };
+    let stateLabel = '<span class="state-label on">Active</span>';
+    if (state === 'inactive') stateLabel = '<span class="state-label off">Not active</span>';
+    if (state === 'pending') {
+      const days = daysSince(n.pendingSince);
+      stateLabel = '<span class="state-label pending">Pending since ' + esc(fmtDate(n.pendingSince)) + '</span>'
+        + '<span class="state-label pending" style="font-weight:600;margin-top:1px;">' + days + (days === 1 ? ' day' : ' days') + ' ago</span>';
+    }
     const st = (n.status || '').toLowerCase();
     const stClass = ['approved', 'pending', 'rejected'].includes(st) ? 'st-' + st : 'st-other';
     const tg = (n.telegram || '').replace(/^@/, '');
     const contact = [n.email ? esc(n.email) : '', tg ? '@' + esc(tg) : ''].filter(Boolean).join(' · ');
     return `
       <tr class="${on ? '' : 'net-disabled'}">
-        <td class="keep"><button class="toggle${on ? ' on' : ''}" onclick="toggleEnabled('${esc(n.id)}')" title="${on ? 'Enabled — click to disable' : 'Disabled — click to enable'}"><span class="toggle-knob"></span></button></td>
+        <td class="keep"><button class="toggle ${toggleClass}" onclick="cycleState('${esc(n.id)}')" title="${NEXT_LABEL[state]}"><span class="toggle-knob"></span></button>${stateLabel}</td>
         <td class="net-name">${esc(n.name)}</td>
         <td>${n.identity ? esc(n.identity) : '<span class="muted">—</span>'}</td>
         <td>${n.paymentTerms ? esc(n.paymentTerms) : '<span class="muted">—</span>'}</td>
@@ -247,6 +300,9 @@ function render() {
         <td>${n.ownerTracker ? esc(n.ownerTracker) : '<span class="muted">—</span>'}</td>
         <td><span class="pill ${stClass}">${esc(n.status || '—')}</span></td>
         <td>${contact || '<span class="muted">—</span>'}</td>
+        <td>${n.fbPage ? esc(n.fbPage) : '<span class="muted">—</span>'}</td>
+        <td>${n.trackerDomain ? esc(n.trackerDomain) : '<span class="muted">—</span>'}</td>
+        <td class="notes">${n.notes ? esc(n.notes).replace(/\n/g, '<br>') : '<span class="muted">—</span>'}</td>
         <td class="keep"><div class="actions">
           <button onclick="editNetwork('${esc(n.id)}')" title="Edit">${EDIT_ICON}</button>
           <button class="del" onclick="deleteNetwork('${esc(n.id)}')" title="Delete">${DEL_ICON}</button>
@@ -264,15 +320,23 @@ function openNetworkModal(n) {
   $('nw-payout').value = n ? (n.minPayout || '') : '';
   $('nw-email').value = n ? (n.email || '') : '';
   $('nw-telegram').value = n ? (n.telegram || '') : '';
+  $('nw-fb-page').value = n ? (n.fbPage || '') : '';
+  $('nw-tracker-domain').value = n ? (n.trackerDomain || '') : '';
   $('nw-owner-tracker').value = n ? (n.ownerTracker || '') : '';
   $('nw-our-tracker').value = n ? (n.ourTracker || '') : '';
   $('nw-methods').value = n ? (n.paymentMethods || '') : '';
   $('nw-manager').value = n ? (n.manager || '') : '';
   $('nw-status').value = n && ['pending', 'rejected'].includes(n.status) ? n.status : 'approved';
-  $('nw-enabled').checked = n ? isEnabled(n) : true;
+  $('nw-state').value = n ? netState(n) : 'active';
+  $('nw-pending-since').value = (n && n.pendingSince) || todayYmd();
+  onStateChange();
   $('nw-notes').value = n ? (n.notes || '') : '';
   $('network-modal').classList.add('open');
   $('nw-name').focus();
+}
+
+function onStateChange() {
+  $('nw-pending-wrap').style.display = $('nw-state').value === 'pending' ? '' : 'none';
 }
 
 function closeNetworkModal() { $('network-modal').classList.remove('open'); _editingId = null; }
@@ -289,12 +353,15 @@ async function submitNetworkForm() {
     minPayout: $('nw-payout').value,
     email: $('nw-email').value,
     telegram: $('nw-telegram').value,
+    fbPage: $('nw-fb-page').value,
+    trackerDomain: $('nw-tracker-domain').value,
     ownerTracker: $('nw-owner-tracker').value,
     ourTracker: $('nw-our-tracker').value,
     paymentMethods: $('nw-methods').value,
     manager: $('nw-manager').value,
     status: $('nw-status').value,
-    enabled: $('nw-enabled').checked,
+    enabled: $('nw-state').value !== 'inactive',
+    pendingSince: $('nw-state').value === 'pending' ? ($('nw-pending-since').value || todayYmd()) : '',
     notes: $('nw-notes').value,
   };
   try {
@@ -318,14 +385,19 @@ async function deleteNetwork(id) {
   } catch (e) { alert('Delete failed: ' + e.message); }
 }
 
-async function toggleEnabled(id) {
+// Click cycles: Active → Active but pending (dated today) → Not active → Active.
+async function cycleState(id) {
   const n = _networks.find(x => x.id === id);
   if (!n) return;
-  const next = !isEnabled(n);
-  n.enabled = next; render(); // optimistic
+  const prev = { enabled: n.enabled, pendingSince: n.pendingSince };
+  const state = netState(n);
+  const next = state === 'active' ? { enabled: true, pendingSince: todayYmd() }
+             : state === 'pending' ? { enabled: false, pendingSince: '' }
+             : { enabled: true, pendingSince: '' };
+  Object.assign(n, next); render(); // optimistic
   try {
-    await api({ _action: 'update', id, enabled: next });
-  } catch (e) { n.enabled = !next; render(); alert('Failed: ' + e.message); }
+    await api({ _action: 'update', id, ...next });
+  } catch (e) { Object.assign(n, prev); render(); alert('Failed: ' + e.message); }
 }
 
 loadNetworks();

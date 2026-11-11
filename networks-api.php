@@ -36,7 +36,8 @@ function slugify($s) {
 
 // Only these fields can be set from the Networks page.
 const NETWORK_FIELDS = ['name', 'identity', 'email', 'telegram', 'ourTracker', 'ownerTracker', 'status',
-                        'paymentTerms', 'minPayout', 'paymentMethods', 'manager', 'notes', 'enabled'];
+                        'paymentTerms', 'minPayout', 'paymentMethods', 'manager', 'notes', 'enabled', 'pendingSince',
+                        'fbPage', 'trackerDomain'];
 
 function pick_fields($body) {
     $out = [];
@@ -44,6 +45,9 @@ function pick_fields($body) {
         if (!array_key_exists($k, $body)) continue;
         $out[$k] = $k === 'enabled' ? (bool) $body[$k] : trim((string) $body[$k]);
     }
+    // "Active but pending": pendingSince holds the YYYY-MM-DD it was set; only valid on an enabled network.
+    if (isset($out['pendingSince']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $out['pendingSince'])) $out['pendingSince'] = '';
+    if (($out['enabled'] ?? true) === false) $out['pendingSince'] = '';
     return $out;
 }
 
@@ -78,7 +82,8 @@ if ($action === 'create') {
     if (($fields['name'] ?? '') === '') { http_response_code(400); echo json_encode(['error' => 'name required']); exit; }
     $new = $fields + ['identity' => '', 'email' => '', 'telegram' => '', 'ourTracker' => '', 'ownerTracker' => '',
                       'status' => 'approved', 'paymentTerms' => '', 'minPayout' => '', 'paymentMethods' => '',
-                      'manager' => '', 'notes' => '', 'enabled' => true];
+                      'manager' => '', 'notes' => '', 'enabled' => true,
+                      'fbPage' => '', 'trackerDomain' => ''];
     $new['id'] = slugify($new['name'] . ' ' . $new['identity']) . '-' . substr(bin2hex(random_bytes(2)), 0, 4);
     $new['createdAt'] = gmdate('c');
     $networks[] = $new;
