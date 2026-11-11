@@ -18,7 +18,7 @@ no_cache_headers();
     background: #f8fafc; color: #0f172a;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
-  .topbar { max-width: none; margin: 0 auto 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .topbar { max-width: 1640px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .brand { font-size: 22px; font-weight: 800; color: #16a34a; }
   .topbar-right { display: flex; align-items: center; gap: 10px; }
   .nav-link { color: #475569; font-size: 13.5px; font-weight: 600; text-decoration: none; padding: 9px 14px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; }
@@ -27,15 +27,16 @@ no_cache_headers();
     background: #16a34a; color: #fff; border: none; font-weight: 700;
     padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 13.5px;
   }
-  .toolbar { max-width: none; margin: 0 auto 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .toolbar { max-width: 1640px; margin: 0 auto 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .toolbar input { flex: 1; min-width: 220px; max-width: 360px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; background: #fff; }
   .count { font-size: 12.5px; color: #64748b; }
 
-  .table-wrap { max-width: none; margin: 0 auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow-x: auto; }
+  .table-wrap { max-width: 1640px; margin: 0 auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
   th, td { padding: 11px 12px; text-align: left; font-size: 13px; white-space: nowrap; }
   th { background: #f8fafc; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #e2e8f0; }
   tbody tr:not(:last-child) td { border-bottom: 1px solid #f1f5f9; }
+  th + th, td + td { border-left: 1px solid #eef2f6; }
   tbody tr:hover { background: #f8fafc; }
   tr.net-disabled td:not(.keep) { opacity: 0.5; }
   td.notes { white-space: normal; min-width: 180px; max-width: 280px; color: #475569; font-size: 12.5px; line-height: 1.45; }
@@ -108,10 +109,10 @@ no_cache_headers();
     <thead>
       <tr>
         <th>State</th><th>Name</th><th>Identity</th><th>Payment Terms</th><th>Min Payout</th>
-        <th>Status</th><th>Contact</th><th>FB Page</th><th>Tracker Domain</th><th>Notes</th><th></th>
+        <th>Contact</th><th>FB Page</th><th>Tracker Domain</th><th>Notes</th><th></th>
       </tr>
     </thead>
-    <tbody id="rows"><tr><td colspan="11" class="empty">Loading…</td></tr></tbody>
+    <tbody id="rows"><tr><td colspan="10" class="empty">Loading…</td></tr></tbody>
   </table>
 </div>
 
@@ -159,14 +160,6 @@ no_cache_headers();
       </div>
     </div>
     <div class="row-2">
-      <div class="field">
-        <label class="field-label" for="nw-status">Status</label>
-        <select id="nw-status">
-          <option value="approved">approved</option>
-          <option value="pending">pending</option>
-          <option value="rejected">rejected</option>
-        </select>
-      </div>
       <div class="field">
         <label class="field-label" for="nw-state">State</label>
         <select id="nw-state" onchange="onStateChange()">
@@ -246,7 +239,7 @@ function render() {
   $('count').textContent = _networks.length + ' networks · ' + activeCount + ' active · ' + pendingCount + ' pending';
 
   if (!list.length) {
-    $('rows').innerHTML = '<tr><td colspan="11" class="empty">' + (q ? 'No networks match.' : 'No networks yet — click "+ Add Network".') + '</td></tr>';
+    $('rows').innerHTML = '<tr><td colspan="10" class="empty">' + (q ? 'No networks match.' : 'No networks yet — click "+ Add Network".') + '</td></tr>';
     return;
   }
 
@@ -262,8 +255,6 @@ function render() {
       stateLabel = '<span class="state-label pending">Pending since ' + esc(fmtDate(n.pendingSince)) + '</span>'
         + '<span class="state-label pending" style="font-weight:600;margin-top:1px;">' + days + (days === 1 ? ' day' : ' days') + ' ago</span>';
     }
-    const st = (n.status || '').toLowerCase();
-    const stClass = ['approved', 'pending', 'rejected'].includes(st) ? 'st-' + st : 'st-other';
     const contact = n.email ? esc(n.email) : '';
     return `
       <tr class="${on ? '' : 'net-disabled'}">
@@ -272,7 +263,6 @@ function render() {
         <td>${n.identity ? esc(n.identity) : '<span class="muted">—</span>'}</td>
         <td>${n.paymentTerms ? esc(n.paymentTerms) : '<span class="muted">—</span>'}</td>
         <td class="payout">${n.minPayout ? esc(n.minPayout) : '<span class="muted">—</span>'}</td>
-        <td><span class="pill ${stClass}">${esc(n.status || '—')}</span></td>
         <td>${contact || '<span class="muted">—</span>'}</td>
         <td>${n.fbPage ? esc(n.fbPage) : '<span class="muted">—</span>'}</td>
         <td>${n.trackerDomain ? esc(n.trackerDomain) : '<span class="muted">—</span>'}</td>
@@ -295,7 +285,6 @@ function openNetworkModal(n) {
   $('nw-email').value = n ? (n.email || '') : '';
   $('nw-fb-page').value = n ? (n.fbPage || '') : '';
   $('nw-tracker-domain').value = n ? (n.trackerDomain || '') : '';
-  $('nw-status').value = n && ['pending', 'rejected'].includes(n.status) ? n.status : 'approved';
   $('nw-state').value = n ? netState(n) : 'active';
   $('nw-pending-since').value = (n && n.pendingSince) || todayYmd();
   onStateChange();
@@ -323,7 +312,6 @@ async function submitNetworkForm() {
     email: $('nw-email').value,
     fbPage: $('nw-fb-page').value,
     trackerDomain: $('nw-tracker-domain').value,
-    status: $('nw-status').value,
     enabled: $('nw-state').value !== 'inactive',
     pendingSince: $('nw-state').value === 'pending' ? ($('nw-pending-since').value || todayYmd()) : '',
     notes: $('nw-notes').value,
