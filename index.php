@@ -185,10 +185,11 @@ $host = $parts['host'] ?? '';
 $path = $parts['path'] ?? '';
 $finalUrl = $scheme . '://' . $host . $path . ($query ? '?' . $query : '');
 
-// Pre-lander page for this offer, if one has been built: prelanders/<offerId>.html.
+// Pre-lander page, only when the offer has the Pre-lander box ticked and its page exists
+// (prelanders/<offerId>.html). Otherwise ?prelander=1 just redirects like before.
 // Its CTA links ({{CTA}}) get the exact same final URL the direct redirect would use.
 $prelanderFile = __DIR__ . '/prelanders/' . basename($offerId) . '.html';
-$showPrelander = $wantPrelander && is_file($prelanderFile);
+$showPrelander = $wantPrelander && $offer && !empty($offer['prelander']) && is_file($prelanderFile);
 
 append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => $geo['country'], 'region' => $geo['regionName'], 'city' => $geo['city'], 'zip' => $geo['zip'] ?? null, 'valid' => true, 'redirected' => true, 'reason' => null, 's2' => $s2, 'prelander' => $showPrelander]);
 

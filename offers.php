@@ -86,9 +86,22 @@ no_cache_headers();
 
   .ofc-restrictions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
   .ofc-restrict { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; }
-  .ofc-prelander { padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 700; }
-  .ofc-prelander.needed { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
-  .ofc-prelander.live { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; }
+  .ofc-pl { display: inline-flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 11.5px; font-weight: 600; color: #475569; letter-spacing: .01em; }
+  .pl-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex: none; }
+  .pl-dot.live { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.18); }
+  .pl-dot.pending { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,.18); }
+  .pl-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
+  .pl-switch { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+  .pl-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .pl-track { position: relative; width: 34px; height: 20px; border-radius: 999px; background: #cbd5e1; transition: background .16s; }
+  .pl-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .16s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+  .pl-switch input:checked + .pl-track { background: #16a34a; }
+  .pl-switch input:checked + .pl-track .pl-knob { transform: translateX(14px); }
+  .pl-label { font-size: 13px; font-weight: 700; color: #0f172a; }
+  .pl-status { display: none; gap: 6px; margin-left: auto; }
+  .pl-status.show { display: flex; }
+  .pl-status button { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; border: 1px solid #e2e8f0; background: #fff; font-size: 12px; font-weight: 600; color: #64748b; cursor: pointer; }
+  .pl-status button.on { border-color: #0f172a; color: #0f172a; }
   .ofc-restrict.empty { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
 
   .ofc-controls { display: flex; align-items: center; justify-content: space-between; }
@@ -188,18 +201,24 @@ no_cache_headers();
       <label class="field-label" for="of-link">Destination Link<span class="req">*</span> <span class="hint">(where MoneyWise redirects traffic)</span></label>
       <input id="of-link" type="text" placeholder="https://tracker.com/offer/..." style="font-family:monospace;font-size:13px;">
     </div>
-    <div class="row-2">
-      <div class="field">
-        <label class="field-label" for="of-network-pick">Network <span class="hint">(auto-fills account / trackers)</span></label>
-        <select id="of-network-pick" onchange="onOfferNetworkPick()">
-          <option value="">— select network —</option>
-        </select>
-        <input id="of-network" type="hidden">
+    <div class="pl-row">
+      <label class="pl-switch">
+        <input id="of-prelander" type="checkbox" onchange="onPrelanderToggle()">
+        <span class="pl-track"><span class="pl-knob"></span></span>
+        <span class="pl-label">Pre-lander</span>
+      </label>
+      <div class="pl-status" id="of-prelander-status-wrap">
+        <button type="button" data-v="needed" onclick="setPrelanderStatus('needed')"><span class="pl-dot pending"></span>Pending</button>
+        <button type="button" data-v="live" onclick="setPrelanderStatus('live')"><span class="pl-dot live"></span>Live</button>
       </div>
-      <div class="field">
-        <label class="field-label" for="of-internal-name">Internal / Display Name</label>
-        <input id="of-internal-name" type="text">
-      </div>
+      <input id="of-prelander-status" type="hidden" value="needed">
+    </div>
+    <div class="field">
+      <label class="field-label" for="of-network-pick">Network <span class="hint">(auto-fills account details)</span></label>
+      <select id="of-network-pick" onchange="onOfferNetworkPick()">
+        <option value="">— select network —</option>
+      </select>
+      <input id="of-network" type="hidden">
     </div>
     <div class="row-2">
       <div class="field">
@@ -245,40 +264,6 @@ no_cache_headers();
         <input id="of-account-telegram" type="text">
       </div>
     </div>
-    <div class="row-2">
-      <div class="field">
-        <label class="field-label" for="of-offer-tracker">Offer Tracker</label>
-        <input id="of-offer-tracker" type="text">
-      </div>
-      <div class="field">
-        <label class="field-label" for="of-merchant">Merchant / Gateway</label>
-        <input id="of-merchant" type="text">
-      </div>
-    </div>
-    <div class="row-2">
-      <div class="field">
-        <label class="field-label" for="of-tracker">Our Tracker</label>
-        <input id="of-tracker" type="text" value="BeMob">
-      </div>
-      <div class="field">
-        <label class="field-label" for="of-tracker-email">Tracker Account Email</label>
-        <input id="of-tracker-email" type="email">
-      </div>
-    </div>
-    <div class="field">
-      <label class="field-label" for="of-restrictions">Restrictions <span class="hint">(comma-separated)</span></label>
-      <input id="of-restrictions" type="text" placeholder="e.g. Discover not accepted">
-    </div>
-    <div class="field" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;">
-        <input id="of-prelander" type="checkbox" style="width:auto;" onchange="$('of-prelander-status').style.display = this.checked ? '' : 'none'">
-        Is offer ka pre-lander banana hai
-      </label>
-      <select id="of-prelander-status" style="width:auto;display:none;">
-        <option value="needed">Banana hai (pending)</option>
-        <option value="live">Ban gaya — live</option>
-      </select>
-    </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeOfferModal()">Cancel</button>
       <button class="btn-primary" id="of-submit-btn" onclick="submitOfferForm()">Save Offer</button>
@@ -293,9 +278,19 @@ no_cache_headers();
       <h2>Drive traffic to this link</h2>
       <button class="btn-close" onclick="closeMoneyWiseLinkModal()">✕</button>
     </div>
+    <div class="field" id="mw-link-pre-field" style="display:none;">
+      <label class="field-label">With Pre-lander</label>
+      <div style="display:flex;gap:8px;">
+        <input id="mw-link-pre-value" type="text" readonly style="font-weight:600;font-family:monospace;flex:1;">
+        <button class="ofc-mw-copy" style="padding:8px;" onclick="copyField('mw-link-pre-value', this)" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+      </div>
+    </div>
     <div class="field">
-      <label class="field-label">MoneyWise Link</label>
-      <input id="mw-link-value" type="text" readonly style="font-weight:600;font-family:monospace;">
+      <label class="field-label" id="mw-link-label">MoneyWise Link</label>
+      <div style="display:flex;gap:8px;">
+        <input id="mw-link-value" type="text" readonly style="font-weight:600;font-family:monospace;flex:1;">
+        <button class="ofc-mw-copy" style="padding:8px;" onclick="copyField('mw-link-value', this)" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeMoneyWiseLinkModal()">Close</button>
@@ -312,7 +307,10 @@ const DEFAULT_DOMAIN = 'moneywise2026.com';
 function offerDomain(o) { return (o && o.domain) || DEFAULT_DOMAIN; }
 // Parked-domain links read /offerid=<id>; .htaccess routes both forms to the same offer.
 function offerPath(o, id) { return offerDomain(o) + (offerDomain(o) === DEFAULT_DOMAIN ? '/' : '/offerid=') + id; }
-function offerLink(id) { return 'https://' + offerPath(_offersCache.find(x => x.id === id), id); }
+function offerLink(id, variant) {
+  const suffix = variant === 'pre' ? '?prelander=1' : variant === 'direct' ? '?prelander=0' : '';
+  return 'https://' + offerPath(_offersCache.find(x => x.id === id), id) + suffix;
+}
 let _offersCache = [];
 let _networksCache = [];
 let _editingOfferId = null;
@@ -352,8 +350,6 @@ function onOfferNetworkPick() {
   $('of-account').value          = n.identity || '';
   $('of-account-email').value    = n.email || '';
   $('of-account-telegram').value = (n.telegram || '').replace(/^@/, '');
-  if (n.ourTracker)   $('of-tracker').value = n.ourTracker;
-  if (n.ownerTracker) $('of-offer-tracker').value = n.ownerTracker;
 }
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -438,10 +434,22 @@ function render() {
     + renderSection('🗂 Older', 'Older than 30 days', bucketOlder);
 }
 
+function trafficLinkRow(o, variant, label) {
+  const suffix = variant === 'pre' ? '?prelander=1' : variant === 'direct' ? '?prelander=0' : '';
+  return `
+        <div class="ofc-mw-link">
+          <div style="flex:1;min-width:0;">
+            <div class="ofc-mw-link-k">${esc(label)}</div>
+            <div class="ofc-mw-link-text">${esc(offerPath(o, o.id) + suffix)}</div>
+          </div>
+          <button class="ofc-mw-copy" onclick="copyOfferCardLink('${esc(o.id)}', this, '${variant}')" title="Copy link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        </div>`;
+}
+
 function renderCard(o, groupBadge) {
   const restrictions = (o.restrictions && o.restrictions.length)
     ? o.restrictions.map(r => '<span class="ofc-restrict">' + esc(r) + '</span>').join('')
-    : '<span class="ofc-restrict empty">No restrictions</span>';
+    : '';
   const initials = (o.name || '?').trim().slice(0, 2).toUpperCase();
   const tg = (o.accountTelegram || '').replace(/^@/, '');
   const accent = networkColor(o);
@@ -453,6 +461,7 @@ function renderCard(o, groupBadge) {
         <div class="ofc-logo" style="background:${accent};">${esc(initials)}</div>
         <div style="flex:1;min-width:0;">
           <div class="ofc-name">${esc(o.name)}${groupBadge || ''}</div>
+          ${o.prelander ? '<div class="ofc-pl" title="Pre-lander ' + (o.prelander === 'live' ? 'live' : 'pending') + '"><span class="pl-dot ' + (o.prelander === 'live' ? 'live' : 'pending') + '"></span>Prelander</div>' : ''}
         </div>
         <button class="ofc-payout">${esc(o.payout || 'Set CPA')}</button>
       </div>
@@ -477,13 +486,7 @@ function renderCard(o, groupBadge) {
             ${tg ? '<a href="https://t.me/' + esc(tg) + '" target="_blank" class="ofc-id-tg">@' + esc(tg) + '</a>' : ''}
           </div>
         </div>
-        <div class="ofc-mw-link">
-          <div style="flex:1;min-width:0;">
-            <div class="ofc-mw-link-k">Traffic Link</div>
-            <div class="ofc-mw-link-text">${esc(offerPath(o, o.id))}</div>
-          </div>
-          <button class="ofc-mw-copy" onclick="copyOfferCardLink('${esc(o.id)}', this)" title="Copy MoneyWise link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-        </div>
+        ${o.prelander ? trafficLinkRow(o, 'pre', 'Traffic Link · Pre-lander') + trafficLinkRow(o, 'direct', 'Traffic Link · Direct') : trafficLinkRow(o, '', 'Traffic Link')}
         <div class="ofc-mw-link ofc-mw-link-dest">
           <div style="flex:1;min-width:0;">
             <div class="ofc-mw-link-k dest">Destination URL</div>
@@ -491,7 +494,7 @@ function renderCard(o, groupBadge) {
           </div>
           ${o.link ? '<button class="ofc-mw-copy dest" onclick="copyDestLink(\'' + esc(o.id) + '\', this)" title="Copy destination link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' : ''}
         </div>
-        <div class="ofc-restrictions">${o.prelander === 'live' ? '<span class="ofc-prelander live">✓ Pre-lander live</span>' : o.prelander === 'needed' ? '<span class="ofc-prelander needed">Pre-lander pending</span>' : ''}${restrictions}</div>
+        ${restrictions ? '<div class="ofc-restrictions">' + restrictions + '</div>' : ''}
       </div>
     </div>
   `;
@@ -507,7 +510,6 @@ function openOfferModal(offer) {
   $('of-domain').value = offerDomain(offer);
   $('of-link').value = offer ? (offer.link || '') : '';
   $('of-network').value = offer ? (offer.network || '') : '';
-  $('of-internal-name').value = offer ? (offer.internalName || '') : '';
   $('of-payout').value = offer ? (offer.payout || '') : '';
   $('of-cr').value = offer ? (offer.conversionRate || '') : '';
   $('of-cap').value = offer && offer.cap != null ? offer.cap : '';
@@ -517,15 +519,10 @@ function openOfferModal(offer) {
   $('of-account').value = offer ? (offer.account || '') : '';
   $('of-account-email').value = offer ? (offer.accountEmail || '') : '';
   $('of-account-telegram').value = offer ? (offer.accountTelegram || '') : '';
-  $('of-offer-tracker').value = offer ? (offer.offerTracker || '') : '';
-  $('of-merchant').value = offer ? (offer.merchant || '') : '';
-  $('of-tracker').value = offer ? (offer.tracker || 'BeMob') : 'BeMob';
-  $('of-tracker-email').value = offer ? (offer.trackerEmail || '') : '';
-  $('of-restrictions').value = offer && offer.restrictions ? offer.restrictions.join(', ') : '';
   const pl = (offer && offer.prelander) || '';
   $('of-prelander').checked = !!pl;
-  $('of-prelander-status').value = pl === 'live' ? 'live' : 'needed';
-  $('of-prelander-status').style.display = pl ? '' : 'none';
+  setPrelanderStatus(pl === 'live' ? 'live' : 'needed');
+  onPrelanderToggle();
   $('offer-modal').classList.add('open');
 }
 
@@ -552,7 +549,6 @@ async function submitOfferForm() {
     id, link, name,
     domain: $('of-domain').value,
     network: $('of-network').value.trim(),
-    internalName: $('of-internal-name').value.trim(),
     payout: $('of-payout').value.trim(),
     conversionRate: $('of-cr').value.trim(),
     cap: $('of-cap').value.trim() === '' ? null : parseInt($('of-cap').value, 10),
@@ -562,11 +558,6 @@ async function submitOfferForm() {
     account: $('of-account').value.trim(),
     accountEmail: $('of-account-email').value.trim(),
     accountTelegram: $('of-account-telegram').value.trim().replace(/^@/, ''),
-    offerTracker: $('of-offer-tracker').value.trim(),
-    merchant: $('of-merchant').value.trim(),
-    tracker: $('of-tracker').value.trim(),
-    trackerEmail: $('of-tracker-email').value.trim(),
-    restrictions: $('of-restrictions').value.split(',').map(s => s.trim()).filter(Boolean),
     prelander: $('of-prelander').checked ? $('of-prelander-status').value : '',
   };
 
@@ -613,16 +604,33 @@ async function toggleOfferEnabled(id) {
 }
 
 function showMoneyWiseLink(offerId) {
-  $('mw-link-value').value = offerLink(offerId);
+  const o = _offersCache.find(x => x.id === offerId);
+  const pre = !!(o && o.prelander);
+  $('mw-link-label').textContent = pre ? 'Direct (auto redirect)' : 'MoneyWise Link';
+  $('mw-link-value').value = offerLink(offerId, pre ? 'direct' : '');
+  $('mw-link-pre-field').style.display = pre ? '' : 'none';
+  $('mw-link-pre-value').value = pre ? offerLink(offerId, 'pre') : '';
   $('mw-link-modal').classList.add('open');
 }
+function copyField(id, btn) {
+  navigator.clipboard.writeText($(id).value).catch(() => {});
+  _flashCopyIcon(btn);
+}
+function onPrelanderToggle() {
+  $('of-prelander-status-wrap').classList.toggle('show', $('of-prelander').checked);
+}
+function setPrelanderStatus(v) {
+  $('of-prelander-status').value = v;
+  document.querySelectorAll('#of-prelander-status-wrap button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+}
+
 function closeMoneyWiseLinkModal() { $('mw-link-modal').classList.remove('open'); }
 function copyMoneyWiseLink() {
   const inp = $('mw-link-value'); inp.select();
   navigator.clipboard.writeText(inp.value).catch(() => document.execCommand('copy'));
 }
-function copyOfferCardLink(offerId, btn) {
-  navigator.clipboard.writeText(offerLink(offerId)).catch(() => {});
+function copyOfferCardLink(offerId, btn, variant) {
+  navigator.clipboard.writeText(offerLink(offerId, variant)).catch(() => {});
   _flashCopyIcon(btn);
 }
 function copyDestLink(offerId, btn) {
