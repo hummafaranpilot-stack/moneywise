@@ -68,6 +68,7 @@ function render_redirecting($destUrl) {
 <!doctype html>
 <html><head><meta charset="utf-8">
 <title></title>
+<meta name="referrer" content="origin">
 <meta http-equiv="refresh" content="0;url={$dest}">
 </head>
 <body></body></html>
@@ -174,6 +175,9 @@ $parts = parse_url($dest);
 parse_str($parts['query'] ?? '', $destParams);
 $incoming = $_GET;
 unset($incoming['offer']);
+// Our own switch, never passed on: ?prelander=1 shows the pre-lander, anything else redirects.
+$wantPrelander = (string) ($incoming['prelander'] ?? '') === '1';
+unset($incoming['prelander']);
 $merged = array_merge($destParams, $incoming, $forward);
 $query = http_build_query($merged);
 $scheme = $parts['scheme'] ?? 'https';
@@ -181,7 +185,18 @@ $host = $parts['host'] ?? '';
 $path = $parts['path'] ?? '';
 $finalUrl = $scheme . '://' . $host . $path . ($query ? '?' . $query : '');
 
-append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => $geo['country'], 'region' => $geo['regionName'], 'city' => $geo['city'], 'zip' => $geo['zip'] ?? null, 'valid' => true, 'redirected' => true, 'reason' => null, 's2' => $s2]);
+// Pre-lander page for this offer, if one has been built: prelanders/<offerId>.html.
+// Its CTA links ({{CTA}}) get the exact same final URL the direct redirect would use.
+$prelanderFile = __DIR__ . '/prelanders/' . basename($offerId) . '.html';
+$showPrelander = $wantPrelander && is_file($prelanderFile);
 
+append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => $geo['country'], 'region' => $geo['regionName'], 'city' => $geo['city'], 'zip' => $geo['zip'] ?? null, 'valid' => true, 'redirected' => true, 'reason' => null, 's2' => $s2, 'prelander' => $showPrelander]);
+
+// Same referrer either way: the network only ever sees "https://<our domain>/".
+header('Referrer-Policy: origin');
 header('Content-Type: text/html');
+if ($showPrelander) {
+    echo str_replace('{{CTA}}', esc($finalUrl), file_get_contents($prelanderFile));
+    exit;
+}
 render_redirecting($finalUrl);
