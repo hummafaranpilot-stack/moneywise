@@ -83,6 +83,7 @@ no_cache_headers();
   .ofc-mw-copy { background: #fff; border: 1px solid #bbf7d0; cursor: pointer; padding: 5px; border-radius: 6px; color: #166534; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
   .ofc-mw-copy.dest { border-color: #fcd34d; color: #92400e; }
   .ofc-mw-copy svg { width: 13px; height: 13px; }
+  .ofc-mw-copy.marked { gap: 4px; padding: 5px 7px; font-size: 10px; font-weight: 700; }
 
   .ofc-restrictions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
   .ofc-restrict { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; }
@@ -434,15 +435,20 @@ function render() {
     + renderSection('🗂 Older', 'Older than 30 days', bucketOlder);
 }
 
-function trafficLinkRow(o, variant, label) {
-  const suffix = variant === 'pre' ? '?prelander=1' : variant === 'direct' ? '?prelander=0' : '';
+// One traffic link row. With a pre-lander it gets two copy buttons: Pre (?prelander=1) and Direct (?prelander=0).
+function trafficLinkRow(o) {
+  const COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  const btn = (variant, mark, title) => '<button class="ofc-mw-copy' + (mark ? ' marked' : '') + '" onclick="copyOfferCardLink(\'' + esc(o.id) + '\', this, \'' + variant + '\')" title="' + title + '">' + COPY + (mark ? '<span>' + mark + '</span>' : '') + '</button>';
+  const buttons = o.prelander
+    ? btn('pre', 'Pre', 'Copy link with pre-lander') + btn('direct', 'Direct', 'Copy direct (auto redirect) link')
+    : btn('', '', 'Copy link');
   return `
         <div class="ofc-mw-link">
           <div style="flex:1;min-width:0;">
-            <div class="ofc-mw-link-k">${esc(label)}</div>
-            <div class="ofc-mw-link-text">${esc(offerPath(o, o.id) + suffix)}</div>
+            <div class="ofc-mw-link-k">Traffic Link</div>
+            <div class="ofc-mw-link-text">${esc(offerPath(o, o.id))}</div>
           </div>
-          <button class="ofc-mw-copy" onclick="copyOfferCardLink('${esc(o.id)}', this, '${variant}')" title="Copy link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          ${buttons}
         </div>`;
 }
 
@@ -486,7 +492,7 @@ function renderCard(o, groupBadge) {
             ${tg ? '<a href="https://t.me/' + esc(tg) + '" target="_blank" class="ofc-id-tg">@' + esc(tg) + '</a>' : ''}
           </div>
         </div>
-        ${o.prelander ? trafficLinkRow(o, 'pre', 'Traffic Link · Pre-lander') + trafficLinkRow(o, 'direct', 'Traffic Link · Direct') : trafficLinkRow(o, '', 'Traffic Link')}
+        ${trafficLinkRow(o)}
         <div class="ofc-mw-link ofc-mw-link-dest">
           <div style="flex:1;min-width:0;">
             <div class="ofc-mw-link-k dest">Destination URL</div>
@@ -642,7 +648,8 @@ function copyDestLink(offerId, btn) {
 function _flashCopyIcon(btn) {
   if (!btn) return;
   const original = btn.innerHTML;
-  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  const mark = btn.querySelector('span');
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' + (mark ? mark.outerHTML : '');
   setTimeout(() => { btn.innerHTML = original; }, 1200);
 }
 
