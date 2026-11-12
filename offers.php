@@ -48,7 +48,9 @@ no_cache_headers();
   .ofc-name { font-size: 15px; font-weight: 700; }
   .ofc-sub { font-size: 11.5px; color: #64748b; margin-top: 2px; }
   /* Network ribbon: starts at the card's left edge, notched on the right, in the network's color. */
-  .ofc-ribbon { align-self: flex-start; margin: -4px 0 -2px -16px; padding: 4px 22px 4px 16px; color: #fff;
+  .ofc-ribbon-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -4px 0 -2px -16px; min-width: 0; }
+  .ofc-ribbon-row .ofc-pl { margin-top: 0; flex: none; }
+  .ofc-ribbon { align-self: flex-start; margin: 0; min-width: 0; padding: 4px 22px 4px 16px; color: #fff;
     font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
     max-width: calc(100% + 16px); overflow: hidden; text-overflow: ellipsis;
     clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%); }
@@ -452,6 +454,17 @@ function trafficLinkRow(o) {
         </div>`;
 }
 
+// Network ribbon on the left, "Prelander" with its live/pending dot on the right.
+function ribbonRow(o, accent) {
+  if (!o.network && !o.prelander) return '';
+  const ribbon = o.network
+    ? '<div class="ofc-ribbon" style="background:' + accent + ';">' + esc(o.network) + (o.account ? ' · ' + esc(o.account) : '') + '</div>'
+    : '<span></span>';
+  const state = o.prelander === 'live' ? 'live' : 'pending';
+  const pl = o.prelander ? '<div class="ofc-pl" title="Pre-lander ' + state + '"><span class="pl-dot ' + state + '"></span>Prelander</div>' : '';
+  return '<div class="ofc-ribbon-row">' + ribbon + pl + '</div>';
+}
+
 function renderCard(o, groupBadge) {
   const restrictions = (o.restrictions && o.restrictions.length)
     ? o.restrictions.map(r => '<span class="ofc-restrict">' + esc(r) + '</span>').join('')
@@ -462,12 +475,11 @@ function renderCard(o, groupBadge) {
   const disabled = o.enabled === false;
   return `
     <div class="offer-card${disabled ? ' offer-disabled' : ''}" style="border-top:4px solid ${accent};">
-      ${o.network ? '<div class="ofc-ribbon" style="background:' + accent + ';">' + esc(o.network) + (o.account ? ' · ' + esc(o.account) : '') + '</div>' : ''}
+      ${ribbonRow(o, accent)}
       <div class="ofc-head">
         <div class="ofc-logo" style="background:${accent};">${esc(initials)}</div>
         <div style="flex:1;min-width:0;">
           <div class="ofc-name">${esc(o.name)}${groupBadge || ''}</div>
-          ${o.prelander ? '<div class="ofc-pl" title="Pre-lander ' + (o.prelander === 'live' ? 'live' : 'pending') + '"><span class="pl-dot ' + (o.prelander === 'live' ? 'live' : 'pending') + '"></span>Prelander</div>' : ''}
         </div>
         <button class="ofc-payout">${esc(o.payout || 'Set CPA')}</button>
       </div>
