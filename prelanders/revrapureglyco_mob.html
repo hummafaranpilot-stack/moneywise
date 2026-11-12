@@ -27,7 +27,6 @@
   a { color: var(--navy); }
 
   .masthead { border-bottom: 3px double var(--ink); padding: 14px 16px 10px; text-align: center; background: #fff; }
-  .masthead-top { font-family: 'Source Sans 3', Arial, sans-serif; font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; max-width: 760px; margin: 0 auto 6px; }
   .paper-name { font-family: 'Playfair Display', Georgia, serif; font-weight: 900; font-size: 34px; letter-spacing: .5px; margin: 0; }
   .nav { font-family: 'Source Sans 3', Arial, sans-serif; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; border-top: 1px solid var(--rule); margin: 10px auto 0; padding-top: 8px; max-width: 760px; display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; color: #444; }
   .nav span.on { color: var(--red); }
@@ -38,6 +37,7 @@
   .dek { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 18px; line-height: 1.55; color: #3d3a34; margin: 0 0 14px; }
   .byline { font-family: 'Source Sans 3', Arial, sans-serif; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 8px 0; margin-bottom: 22px; }
   .byline b { color: var(--ink); }
+  .sponsored { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 
   article p { font-size: 17.5px; line-height: 1.8; margin: 0 0 20px; }
   article p.lead::first-letter { font-family: 'Playfair Display', Georgia, serif; float: left; font-size: 64px; line-height: .9; padding: 6px 8px 0 0; color: var(--red); font-weight: 900; }
@@ -56,11 +56,9 @@
   .cta-btn:hover { background: #174a2d; }
   .inline-cta { font-weight: 700; }
 
-  .fine { font-family: 'Source Sans 3', Arial, sans-serif; font-size: 12.5px; line-height: 1.6; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 34px; }
 
   @media (max-width: 560px) {
     .paper-name { font-size: 26px; }
-    .masthead-top { font-size: 11px; }
     h1 { font-size: 29px; }
     .dek { font-size: 16.5px; }
     article p { font-size: 16.5px; line-height: 1.75; }
@@ -73,8 +71,7 @@
 <body>
 
 <header class="masthead">
-  <div class="masthead-top"><span id="today"></span><span>Health &amp; Living</span></div>
-  <p class="paper-name">The Daily Wellness Report</p>
+  <p class="paper-name">Steady Energy Journal</p>
   <div class="nav"><span>News</span><span class="on">Health</span><span>Nutrition</span><span>Aging Well</span><span>Lifestyle</span></div>
 </header>
 
@@ -82,7 +79,7 @@
   <div class="kicker">Health &middot; Aging Well</div>
   <h1>The Afternoon Slump That Many Adults Over 45 Are Rethinking</h1>
   <p class="dek">Heavy eyelids after lunch, sudden sugar cravings, that foggy feeling by three o'clock. Another cup of coffee is not always the answer.</p>
-  <div class="byline">By <b>The Health Desk</b> &nbsp;|&nbsp; <span id="today2"></span> &nbsp;|&nbsp; 5 minute read</div>
+  <div class="byline">By <b>The Health Desk</b> &nbsp;|&nbsp; 5 minute read &nbsp;|&nbsp; <span class="sponsored">Sponsored</span></div>
 
   <article>
     <p class="lead">Most of us know the feeling. You eat a normal lunch, sit back down at your desk or on the couch, and within the hour your energy simply falls off a cliff. Your focus slips, you reach for something sweet, and by evening you feel more tired than the day ever justified.</p>
@@ -136,18 +133,7 @@
     <p>For readers who want to explore the plant based option mentioned in this report, <a class="inline-cta" href="{{CTA}}">current availability is listed on the official site</a>.</p>
   </article>
 
-  <div class="fine">
-    <p><b>Advertisement.</b> This article is a paid promotion and the publisher may receive compensation when readers make a purchase through links on this page. Individual results vary.</p>
-    <p>These statements have not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure or prevent any disease. Always consult your physician before starting any dietary supplement.</p>
-  </div>
 </main>
 
-<script>
-  (function () {
-    var d = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    document.getElementById('today').textContent = d;
-    document.getElementById('today2').textContent = d;
-  })();
-</script>
 </body>
 </html>
