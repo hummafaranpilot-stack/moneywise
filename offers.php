@@ -86,6 +86,9 @@ no_cache_headers();
 
   .ofc-restrictions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
   .ofc-restrict { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; }
+  .ofc-prelander { padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 700; }
+  .ofc-prelander.needed { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
+  .ofc-prelander.live { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; }
   .ofc-restrict.empty { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
 
   .ofc-controls { display: flex; align-items: center; justify-content: space-between; }
@@ -265,6 +268,16 @@ no_cache_headers();
     <div class="field">
       <label class="field-label" for="of-restrictions">Restrictions <span class="hint">(comma-separated)</span></label>
       <input id="of-restrictions" type="text" placeholder="e.g. Discover not accepted">
+    </div>
+    <div class="field" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;">
+        <input id="of-prelander" type="checkbox" style="width:auto;" onchange="$('of-prelander-status').style.display = this.checked ? '' : 'none'">
+        Is offer ka pre-lander banana hai
+      </label>
+      <select id="of-prelander-status" style="width:auto;display:none;">
+        <option value="needed">Banana hai (pending)</option>
+        <option value="live">Ban gaya — live</option>
+      </select>
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeOfferModal()">Cancel</button>
@@ -478,7 +491,7 @@ function renderCard(o, groupBadge) {
           </div>
           ${o.link ? '<button class="ofc-mw-copy dest" onclick="copyDestLink(\'' + esc(o.id) + '\', this)" title="Copy destination link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' : ''}
         </div>
-        <div class="ofc-restrictions">${restrictions}</div>
+        <div class="ofc-restrictions">${o.prelander === 'live' ? '<span class="ofc-prelander live">✓ Pre-lander live</span>' : o.prelander === 'needed' ? '<span class="ofc-prelander needed">Pre-lander pending</span>' : ''}${restrictions}</div>
       </div>
     </div>
   `;
@@ -509,6 +522,10 @@ function openOfferModal(offer) {
   $('of-tracker').value = offer ? (offer.tracker || 'BeMob') : 'BeMob';
   $('of-tracker-email').value = offer ? (offer.trackerEmail || '') : '';
   $('of-restrictions').value = offer && offer.restrictions ? offer.restrictions.join(', ') : '';
+  const pl = (offer && offer.prelander) || '';
+  $('of-prelander').checked = !!pl;
+  $('of-prelander-status').value = pl === 'live' ? 'live' : 'needed';
+  $('of-prelander-status').style.display = pl ? '' : 'none';
   $('offer-modal').classList.add('open');
 }
 
@@ -550,6 +567,7 @@ async function submitOfferForm() {
     tracker: $('of-tracker').value.trim(),
     trackerEmail: $('of-tracker-email').value.trim(),
     restrictions: $('of-restrictions').value.split(',').map(s => s.trim()).filter(Boolean),
+    prelander: $('of-prelander').checked ? $('of-prelander-status').value : '',
   };
 
   try {

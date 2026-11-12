@@ -53,6 +53,8 @@ if ($action === 'create') {
         'weeklyThreshold' => $body['weeklyThreshold'] ?? null,
         'weeklyThresholdType' => $body['weeklyThresholdType'] ?? 'conversions',
         'restrictions' => $body['restrictions'] ?? [],
+        // Pre-lander plan: '' = none, 'needed' = to be built, 'live' = built and running.
+        'prelander' => in_array($body['prelander'] ?? '', ['needed', 'live'], true) ? $body['prelander'] : '',
         'color' => $body['color'] ?? '#64748b',
         'createdAt' => gmdate('c'),
     ];
