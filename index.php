@@ -159,6 +159,31 @@ if (!$dest) {
     exit;
 }
 
+// A disabled offer, or an offer whose network is disabled (Not active on the Networks
+// page), is not forwarded: the visitor gets the same blank page as a rejected click.
+// A network that is "Active but pending" still counts as enabled.
+function offer_network_disabled($offer) {
+    $file = file_exists(DATA_DIR . '/networks-live.json') ? 'networks-live.json' : 'networks.json';
+    $lc = fn($v) => strtolower(trim((string) $v));
+    $sameName = array_values(array_filter(db_read($file, []), fn($n) =>
+        empty($n['deleted']) && $lc($n['name'] ?? '') === $lc($offer['network'] ?? '')));
+    $match = null;
+    foreach ($sameName as $n) {
+        if ($lc($n['identity'] ?? '') === $lc($offer['account'] ?? '')) { $match = $n; break; }
+    }
+    if (!$match && count($sameName) === 1) $match = $sameName[0];
+    return $match && ($match['enabled'] ?? true) === false;
+}
+$blockReason = null;
+if ($offer && ($offer['enabled'] ?? true) === false) $blockReason = 'offer-disabled';
+elseif ($offer && trim($offer['network'] ?? '') !== '' && offer_network_disabled($offer)) $blockReason = 'network-disabled';
+if ($blockReason) {
+    append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => null, 'region' => null, 'city' => null, 'zip' => null, 'valid' => false, 'redirected' => false, 'reason' => $blockReason, 's2' => $s2]);
+    header('Content-Type: text/html');
+    render_rejected();
+    exit;
+}
+
 $geo = geo_lookup($ip);
 $isUs = $geo && ($geo['countryCode'] ?? '') === 'US';
 
