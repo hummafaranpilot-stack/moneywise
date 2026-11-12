@@ -120,8 +120,11 @@ $dest = $map[$offerId] ?? null;
 $ip = client_ip();
 // Our click id for this visit (traffic link ?s2=...); postbacks are matched back to it.
 $s2 = (string) ($_GET['s2'] ?? '');
-// Everflow sites (e.g. Orbio World) take the click id as subid2 instead; it comes back as sub2.
-if ($s2 === '' || $s2[0] === '{') $s2 = (string) ($_GET['subid2'] ?? $s2);
+// Everflow takes the click id as sub2 on its tracking links (e.g. Equantis), or as
+// subid2 on advertiser sites (e.g. Orbio World); either way it comes back as {sub2}.
+foreach (['subid2', 'sub2'] as $k) {
+    if ($s2 === '' || $s2[0] === '{') $s2 = (string) ($_GET[$k] ?? $s2);
+}
 // Params we add or overwrite on the way to the destination.
 $forward = [];
 
