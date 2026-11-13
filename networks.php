@@ -52,6 +52,8 @@ no_cache_headers();
   .st-rejected { background: #fef2f2; color: #b91c1c; }
   .st-other    { background: #f1f5f9; color: #475569; }
   .payout { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .pm-pills { display: flex; gap: 4px; margin-top: 5px; }
+  .pm-pill { display: inline-block; padding: 1px 9px; border-radius: 999px; border: 1px solid; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; }
 
   /* 3-way switch: left = not active, middle = active but pending, right = active */
   .toggle { position: relative; width: 48px; height: 20px; border: none; border-radius: 999px; cursor: pointer; padding: 0; background: #cbd5e1; vertical-align: middle; }
@@ -152,6 +154,15 @@ no_cache_headers();
         <label class="field-label" for="nw-email">Account Email</label>
         <input id="nw-email" type="text">
       </div>
+      <div class="field">
+        <label class="field-label" for="nw-method">Payment Method</label>
+        <select id="nw-method">
+          <option value="">— select —</option>
+          <option value="Wire">Wire</option>
+          <option value="ACH">ACH</option>
+          <option value="USDT">USDT</option>
+        </select>
+      </div>
     </div>
     <div class="field">
       <label class="field-label" for="nw-color">Color <span class="muted">(shows on this network's offer cards)</span></label>
@@ -234,6 +245,16 @@ const FB_ICON = '<svg class="meta-icon fb" viewBox="0 0 24 24"><circle cx="12" c
 const TRACKER_ICON = '<svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
 const DEL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
 
+const METHOD_COLORS = { wire: ['#eff6ff', '#1d4ed8', '#bfdbfe'], ach: ['#f5f3ff', '#6d28d9', '#ddd6fe'], usdt: ['#ecfdf5', '#047857', '#a7f3d0'] };
+function methodPills(v) {
+  const list = String(v || '').split(/[,/]/).map(x => x.trim()).filter(Boolean);
+  if (!list.length) return '';
+  return '<div class="pm-pills">' + list.map(m => {
+    const c = METHOD_COLORS[m.toLowerCase()] || ['#f1f5f9', '#475569', '#e2e8f0'];
+    return '<span class="pm-pill" style="background:' + c[0] + ';color:' + c[1] + ';border-color:' + c[2] + ';">' + esc(m) + '</span>';
+  }).join('') + '</div>';
+}
+
 function render() {
   const q = $('search').value.trim().toLowerCase();
   const list = _networks
@@ -271,7 +292,7 @@ function render() {
         <td class="keep"><button class="toggle ${toggleClass}" onclick="cycleState('${esc(n.id)}')" title="${NEXT_LABEL[state]}"><span class="toggle-knob"></span></button>${stateLabel}</td>
         <td class="net-name"><span class="net-dot" style="background:${esc(n.color || '#94a3b8')};"></span>${esc(n.name)}</td>
         <td>${n.identity ? esc(n.identity) : '<span class="muted">—</span>'}</td>
-        <td>${n.paymentTerms ? esc(n.paymentTerms) : '<span class="muted">—</span>'}</td>
+        <td>${n.paymentTerms ? esc(n.paymentTerms) : '<span class="muted">—</span>'}${methodPills(n.paymentMethods)}</td>
         <td class="payout">${n.minPayout ? esc(n.minPayout) : '<span class="muted">—</span>'}</td>
         <td>${contact || '<span class="muted">—</span>'}</td>
         <td>${(n.fbPage || n.trackerDomain)
@@ -295,6 +316,13 @@ function openNetworkModal(n) {
   $('nw-terms').value = n ? (n.paymentTerms || '') : '';
   $('nw-payout').value = n ? (n.minPayout || '') : '';
   $('nw-email').value = n ? (n.email || '') : '';
+  // Keep an older free-text value selectable instead of silently dropping it.
+  const sel = $('nw-method'), pm = (n && n.paymentMethods) || '';
+  sel.querySelectorAll('option.legacy').forEach(o => o.remove());
+  if (pm && ![...sel.options].some(o => o.value === pm)) {
+    const opt = document.createElement('option'); opt.value = pm; opt.textContent = pm; opt.className = 'legacy'; sel.appendChild(opt);
+  }
+  sel.value = pm;
   $('nw-fb-page').value = n ? (n.fbPage || '') : '';
   // New network: leave the color for the server to pick an unused one, unless the user changes it.
   $('nw-color').value = (n && n.color) || '#94a3b8';
@@ -326,6 +354,7 @@ async function submitNetworkForm() {
     paymentTerms: $('nw-terms').value,
     minPayout: $('nw-payout').value,
     email: $('nw-email').value,
+    paymentMethods: $('nw-method').value,
     fbPage: $('nw-fb-page').value,
     ...(_editingId || $('nw-color').dataset.touched ? { color: $('nw-color').value } : {}),
     trackerDomain: $('nw-tracker-domain').value,
