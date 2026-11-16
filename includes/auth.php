@@ -10,6 +10,11 @@ session_set_cookie_params([
     'httponly' => true,
     'samesite' => 'Lax',
 ]);
+// Keep sessions in our own folder (data/ is web-denied). In the shared default
+// folder, other sites' cleanup deleted them after ~24 minutes and logged us out.
+$_SESSION_DIR = __DIR__ . '/../data/sessions';
+if (!is_dir($_SESSION_DIR)) @mkdir($_SESSION_DIR, 0700, true);
+if (is_dir($_SESSION_DIR) && is_writable($_SESSION_DIR)) session_save_path($_SESSION_DIR);
 session_start();
 // Refresh the cookie's expiry on every request so it keeps sliding forward.
 if (isset($_COOKIE[session_name()])) {

@@ -82,6 +82,17 @@ no_cache_headers();
 </div>
 
 <script>
+// Session expired: send the admin to log in again instead of a cryptic "not authenticated".
+(function () {
+  const _fetch = window.fetch;
+  window.fetch = async function () {
+    const r = await _fetch.apply(this, arguments);
+    if (r.status === 401) { alert('Session expired. Please log in again.'); location.href = '/login.php'; }
+    return r;
+  };
+})();
+</script>
+<script>
 function fmtPct(n, d) { return d > 0 ? ((n / d) * 100).toFixed(1) + '%' : '—'; }
 
 function _ymd(d) {

@@ -303,6 +303,17 @@ no_cache_headers();
 </div>
 
 <script>
+// Session expired: send the admin to log in again instead of a cryptic "not authenticated".
+(function () {
+  const _fetch = window.fetch;
+  window.fetch = async function () {
+    const r = await _fetch.apply(this, arguments);
+    if (r.status === 401) { alert('Session expired. Please log in again.'); location.href = '/login.php'; }
+    return r;
+  };
+})();
+</script>
+<script>
 // All domains serve the same site (the others are parked on moneywise2026.com),
 // so an offer's link works on any of them — the saved domain just decides which
 // one the admin is handed.
