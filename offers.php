@@ -372,10 +372,13 @@ function $(id) { return document.getElementById(id); }
 
 // Network colors, so each offer card shows the color of its network (name + identity).
 let _networkColorList = [];
-function networkColor(o) {
+function findNetwork(o) {
   const lc = v => (v || '').toLowerCase().trim();
   const sameName = _networkColorList.filter(n => lc(n.name) === lc(o.network));
-  const n = sameName.find(x => lc(x.identity) === lc(o.account)) || (sameName.length === 1 ? sameName[0] : null);
+  return sameName.find(x => lc(x.identity) === lc(o.account)) || (sameName.length === 1 ? sameName[0] : null);
+}
+function networkColor(o) {
+  const n = findNetwork(o);
   return n && n.color ? n.color : '#94a3b8';
 }
 
@@ -614,6 +617,13 @@ async function toggleOfferPriority(id) {
   const o = _offersCache.find(x => x.id === id);
   if (!o) return;
   const next = !o.priority;
+  if (next) {
+    const n = findNetwork(o);
+    if (n && (n.enabled === false || n.pendingSince)) {
+      alert('This offer\'s network is ' + (n.enabled === false ? 'paused' : 'pending') + ', so it can\'t be starred.');
+      return;
+    }
+  }
   o.priority = next; render(); // optimistic
   try {
     const r = await fetch('offers-api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _action: 'update', id, priority: next }) });

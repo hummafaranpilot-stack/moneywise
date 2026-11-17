@@ -16,6 +16,7 @@
  */
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/network-hold.php';
 require_login_api();
 no_cache_headers();
 
@@ -135,6 +136,7 @@ if ($action === 'create') {
     if (empty($new['color'])) $new['color'] = unused_color(array_map(fn($n) => strtolower($n['color'] ?? ''), $networks));
     $networks[] = $new;
     db_write(NETWORKS_FILE, $networks);
+    unstar_offers_of_held_networks();
     echo json_encode($new);
     exit;
 }
@@ -150,6 +152,7 @@ if ($action === 'update') {
             $n = array_merge($n, $fields);
             $n['updatedAt'] = gmdate('c');
             db_write(NETWORKS_FILE, $networks);
+            unstar_offers_of_held_networks();
             echo json_encode($n);
             exit;
         }

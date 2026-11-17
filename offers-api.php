@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/network-hold.php';
 require_login_api();
 no_cache_headers();
 
@@ -15,6 +16,7 @@ function slugify($s) {
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
+    unstar_offers_of_held_networks();
     $offers = db_read('offers.json', []);
     $offers = array_values(array_filter($offers, fn($o) => empty($o['deleted'])));
     echo json_encode($offers);
