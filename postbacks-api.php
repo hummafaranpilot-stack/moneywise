@@ -25,7 +25,7 @@ foreach (db_read('clicks-log.json', []) as $c) {
 $conversions = [];
 foreach ($postbacks as $i => $pb) {
     $p = $pb['params'] ?? [];
-    $status = STATUS_NAMES[(string) ($p['status'] ?? '')] ?? null;
+    $status = status_name($p['status'] ?? '');
     $txid = $p['txid'] ?? '';
     if ($status === null && $txid === '') continue; // manual test hits, not real conversions
     $clickId = postback_click_id($p);
