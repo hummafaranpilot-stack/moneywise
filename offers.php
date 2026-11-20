@@ -201,6 +201,7 @@ no_cache_headers();
         <option value="moneywise2026.com">moneywise2026.com</option>
         <option value="mindframemedia.in">mindframemedia.in</option>
         <option value="risingmax.net">risingmax.net</option>
+        <option value="direct">Direct (no domain, use the destination link as is)</option>
       </select>
     </div>
     <div class="field">
@@ -328,7 +329,11 @@ const DEFAULT_DOMAIN = 'moneywise2026.com';
 function offerDomain(o) { return (o && o.domain) || DEFAULT_DOMAIN; }
 // Parked-domain links read /offerid=<id>; .htaccess routes both forms to the same offer.
 function offerPath(o, id) { return offerDomain(o) + (offerDomain(o) === DEFAULT_DOMAIN ? '/' : '/offerid=') + id; }
+// "direct" offers skip MoneyWise: the traffic link is the destination link itself.
+function isDirect(o) { return !!o && o.domain === 'direct'; }
 function offerLink(id, variant) {
+  const o = _offersCache.find(x => x.id === id);
+  if (isDirect(o)) return o.link || '';
   const suffix = variant === 'pre' ? '?prelander=1' : variant === 'direct' ? '?prelander=0' : '';
   return 'https://' + offerPath(_offersCache.find(x => x.id === id), id) + suffix;
 }
@@ -498,6 +503,16 @@ function render() {
 function trafficLinkRow(o) {
   const COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
   const btn = (variant, mark, title) => '<button class="ofc-mw-copy' + (mark ? ' marked' : '') + '" onclick="copyOfferCardLink(\'' + esc(o.id) + '\', this, \'' + variant + '\')" title="' + title + '">' + COPY + (mark ? '<span>' + mark + '</span>' : '') + '</button>';
+  if (isDirect(o)) {
+    return `
+        <div class="ofc-mw-link">
+          <div style="flex:1;min-width:0;">
+            <div class="ofc-mw-link-k">Traffic Link · Direct</div>
+            <div class="ofc-mw-link-text">${esc(o.link || '—')}</div>
+          </div>
+          ${btn('', '', 'Copy direct link')}
+        </div>`;
+  }
   const buttons = o.prelander
     ? btn('pre', 'Pre', 'Copy link with pre-lander') + btn('direct', 'Direct', 'Copy direct (auto redirect) link')
     : btn('', '', 'Copy link');
@@ -687,8 +702,8 @@ async function toggleOfferEnabled(id) {
 
 function showMoneyWiseLink(offerId) {
   const o = _offersCache.find(x => x.id === offerId);
-  const pre = !!(o && o.prelander);
-  $('mw-link-label').textContent = pre ? 'Direct (auto redirect)' : 'MoneyWise Link';
+  const pre = !!(o && o.prelander) && !isDirect(o);
+  $('mw-link-label').textContent = isDirect(o) ? 'Direct link (no MoneyWise redirect)' : pre ? 'Direct (auto redirect)' : 'MoneyWise Link';
   $('mw-link-value').value = offerLink(offerId, pre ? 'direct' : '');
   $('mw-link-pre-field').style.display = pre ? '' : 'none';
   $('mw-link-pre-value').value = pre ? offerLink(offerId, 'pre') : '';
