@@ -129,6 +129,9 @@ no_cache_headers();
   .offers-section.priority-section .offers-section-head { background: linear-gradient(135deg, #fffbeb, #fef3c7); border-color: #fcd34d; }
   .offers-section.priority-section .offers-section-title { color: #92400e; }
   .offers-section.priority-section .offers-section-count { background: #f59e0b; }
+  .offers-section.active-net-section .offers-section-head { background: #f0fdf4; border-color: #bbf7d0; }
+  .offers-section.active-net-section .offers-section-title { color: #166534; }
+  .offers-section.active-net-section .offers-section-count { background: #16a34a; }
   .plan-banner { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; border-radius: 12px; padding: 12px 16px; font-size: 13.5px; margin-bottom: 16px; }
   .plan-banner a { color: #1d4ed8; font-weight: 700; }
   .offers-section-star { width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; display: inline-flex; align-items: center; justify-content: center; }
@@ -437,9 +440,18 @@ function render() {
   const weekAgoMs = todayMs - 6 * 86400000;
   const monthAgoMs = todayMs - 29 * 86400000;
 
-  const priorityOffers = [], bucketToday = [], bucketWeek = [], bucketMonth = [], bucketOlder = [];
+  // Network state now, or the chosen plan's state for that week.
+  const netActive = o => {
+    const n = findNetwork(o);
+    if (!n) return false;
+    const st = plan && (plan.networks || {})[n.id] ? plan.networks[n.id]
+      : (n.enabled === false ? 'paused' : n.pendingSince ? 'pending' : 'active');
+    return st === 'active';
+  };
+  const priorityOffers = [], activeNetOffers = [], bucketToday = [], bucketWeek = [], bucketMonth = [], bucketOlder = [];
   for (const o of _all) {
     if (o.priority) { priorityOffers.push(o); continue; }
+    if (o.enabled !== false && netActive(o)) { activeNetOffers.push(o); continue; }
     const t = ts(o);
     if (t >= todayMs) bucketToday.push(o);
     else if (t >= weekAgoMs) bucketWeek.push(o);
@@ -474,6 +486,7 @@ function render() {
 
   grid.innerHTML = (plan ? '<div class="plan-banner">Showing <b>' + esc(plan.name) + '</b>: offers whose network runs that week, with that week\'s stars. Change them on the <a href="plans.php">Plans</a> page.</div>' : '')
     + renderSection('Priority', 'Starred offers', priorityOffers, { headClass: 'priority-section', icon: STAR_ICON })
+    + renderSection('🟢 Active Networks', 'Enabled offers of networks that are Active' + (plan ? ' in ' + plan.name : ' right now'), activeNetOffers, { headClass: 'active-net-section' })
     + renderSection('🟢 Today', 'Added today', bucketToday)
     + renderSection('🗓 This Week', 'Added in the last 7 days', bucketWeek)
     + renderSection('📅 This Month', 'Added in the last 30 days', bucketMonth)
