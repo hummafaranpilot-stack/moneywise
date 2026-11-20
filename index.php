@@ -115,6 +115,13 @@ HTML;
     exit;
 }
 
+// This week's plan (Plans page) takes effect on the first request of the week.
+// Never let a plan problem stop a redirect.
+try {
+    require_once __DIR__ . '/includes/plans.php';
+    apply_due_plans();
+} catch (Throwable $e) {}
+
 $map = db_read('offers-map.json', []);
 $dest = $map[$offerId] ?? null;
 $ip = client_ip();

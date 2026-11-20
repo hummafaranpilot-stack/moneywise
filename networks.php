@@ -30,6 +30,10 @@ no_cache_headers();
   .toolbar { max-width: 1640px; margin: 0 auto 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .toolbar input { flex: 1; min-width: 220px; max-width: 360px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; background: #fff; }
   .count { font-size: 12.5px; color: #64748b; }
+  .week-plan { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; background: #fff; max-width: 320px; }
+  .plan-chip { display: block; margin-top: 4px; font-size: 10.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; width: max-content; }
+  .plan-chip.active { background: #dcfce7; color: #166534; }
+  .plan-chip.pending { background: #fef3c7; color: #92400e; }
 
   .table-wrap { max-width: 1640px; margin: 0 auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
@@ -101,12 +105,14 @@ no_cache_headers();
   <div class="brand">MoneyWise — Networks</div>
   <div class="topbar-right">
     <a class="nav-link" href="offers.php">Offers</a>
+    <a class="nav-link" href="plans.php">Plans</a>
     <button class="btn-add" onclick="openNetworkModal()">+ Add Network</button>
   </div>
 </div>
 
 <div class="toolbar">
   <input id="search" type="search" placeholder="Search name, identity, FB page, notes…" oninput="render()">
+  <select id="week-plan" class="week-plan" onchange="render()"><option value="">All networks (right now)</option></select>
   <span class="count" id="count"></span>
 </div>
 
@@ -245,11 +251,29 @@ async function api(body) {
   return r.json();
 }
 
+let _plans = [];
 async function loadNetworks() {
-  const r = await fetch('networks-api.php?raw=1');
+  const [r, pr] = await Promise.all([fetch('networks-api.php?raw=1'), fetch('plans-api.php').catch(() => null)]);
   _networks = await r.json();
+  if (pr && pr.ok) {
+    const pj = await pr.json().catch(() => ({}));
+    _plans = pj.plans || [];
+    fillWeekPicker($('week-plan'), _plans, pj.currentWeek);
+  }
   render();
 }
+
+// Week filter: shows which networks a plan runs that week (Plans page).
+function fillWeekPicker(sel, plans, currentWeek) {
+  const keep = sel.value;
+  const fmt = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); };
+  const end = s => { const [y, m, d] = s.split('-').map(Number); const t = new Date(y, m - 1, d + 6); return t.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); };
+  sel.innerHTML = sel.options[0].outerHTML + plans.map(p =>
+    `<option value="${esc(p.id)}">${esc(p.name)} · ${fmt(p.weekStart)} – ${end(p.weekStart)}${p.weekStart === currentWeek ? ' (this week)' : p.weekStart > currentWeek ? ' (upcoming)' : ''}</option>`).join('');
+  sel.value = keep;
+}
+const PLAN_STATE = s => s === 'paused' ? 'inactive' : s; // plan "paused" = page "inactive"
+function plannedState(n, plan) { const s = (plan.networks || {})[n.id]; return s ? PLAN_STATE(s) : netState(n); }
 
 const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
 const FB_ICON = '<svg class="meta-icon fb" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#1877F2"/><path fill="#fff" d="M13.4 19v-6h2l.3-2.4h-2.3V9.1c0-.7.2-1.2 1.2-1.2h1.2V5.8c-.2 0-1-.1-1.8-.1-1.8 0-3 1.1-3 3.1v1.8h-2V13h2v6h2.4z"/></svg>';
@@ -268,7 +292,9 @@ function methodPills(v) {
 
 function render() {
   const q = $('search').value.trim().toLowerCase();
+  const plan = _plans.find(p => p.id === $('week-plan').value) || null;
   const list = _networks
+    .filter(n => !plan || plannedState(n, plan) !== 'inactive')
     .filter(n => !q || [n.name, n.identity, n.paymentTerms, n.email, n.fbPage, n.trackerDomain, n.notes]
       .some(v => (v || '').toLowerCase().includes(q)))
     // Enabled first, then A→Z by name and identity.
@@ -278,7 +304,9 @@ function render() {
 
   const activeCount = _networks.filter(n => netState(n) === 'active').length;
   const pendingCount = _networks.filter(n => netState(n) === 'pending').length;
-  $('count').textContent = _networks.length + ' networks · ' + activeCount + ' active · ' + pendingCount + ' pending';
+  $('count').textContent = plan
+    ? list.filter(n => plannedState(n, plan) === 'active').length + ' active · ' + list.filter(n => plannedState(n, plan) === 'pending').length + ' pending in ' + plan.name
+    : _networks.length + ' networks · ' + activeCount + ' active · ' + pendingCount + ' pending';
 
   if (!list.length) {
     $('rows').innerHTML = '<tr><td colspan="9" class="empty">' + (q ? 'No networks match.' : 'No networks yet — click "+ Add Network".') + '</td></tr>';
@@ -296,6 +324,10 @@ function render() {
       const days = daysSince(n.pendingSince);
       stateLabel = '<span class="state-label pending">Pending since ' + esc(fmtDate(n.pendingSince)) + '</span>'
         + '<span class="state-label pending" style="font-weight:600;margin-top:1px;">' + days + (days === 1 ? ' day' : ' days') + ' ago</span>';
+    }
+    if (plan) {
+      const ps = plannedState(n, plan);
+      stateLabel += '<span class="plan-chip ' + ps + '">' + esc(plan.name) + ': ' + (ps === 'active' ? 'Active' : 'Pending') + '</span>';
     }
     const contact = n.email ? esc(n.email) : '';
     return `

@@ -17,6 +17,7 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/network-hold.php';
+require_once __DIR__ . '/includes/plans.php';
 require_login_api();
 no_cache_headers();
 
@@ -97,6 +98,7 @@ function pick_fields($body) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    apply_due_plans();
     $all = load_networks();
     if (assign_colors($all)) db_write(NETWORKS_FILE, $all);
     $networks = array_values(array_filter($all, fn($n) => empty($n['deleted'])));

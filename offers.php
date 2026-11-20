@@ -129,6 +129,8 @@ no_cache_headers();
   .offers-section.priority-section .offers-section-head { background: linear-gradient(135deg, #fffbeb, #fef3c7); border-color: #fcd34d; }
   .offers-section.priority-section .offers-section-title { color: #92400e; }
   .offers-section.priority-section .offers-section-count { background: #f59e0b; }
+  .plan-banner { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; border-radius: 12px; padding: 12px 16px; font-size: 13.5px; margin-bottom: 16px; }
+  .plan-banner a { color: #1d4ed8; font-weight: 700; }
   .offers-section-star { width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; display: inline-flex; align-items: center; justify-content: center; }
   .offers-section-star svg { width: 18px; height: 18px; }
 
@@ -170,7 +172,9 @@ no_cache_headers();
 <div class="topbar">
   <div class="brand">MoneyWise — Offers</div>
   <div style="display:flex;align-items:center;gap:10px;">
+    <select id="week-plan" onchange="render()" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;max-width:300px;"><option value="">All offers (right now)</option></select>
     <a href="networks.php" style="color:#475569;font-size:13.5px;font-weight:600;text-decoration:none;padding:9px 14px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;">Networks</a>
+    <a href="plans.php" style="color:#475569;font-size:13.5px;font-weight:600;text-decoration:none;padding:9px 14px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;">Plans</a>
     <button class="btn-add" onclick="openOfferModal()">+ Add Offer</button>
   </div>
 </div>
@@ -382,25 +386,50 @@ function networkColor(o) {
   return n && n.color ? n.color : '#94a3b8';
 }
 
+let _plans = [];
 async function loadOffers() {
-  const [r, nr] = await Promise.all([fetch('offers-api.php'), fetch('networks-api.php').catch(() => null)]);
+  const [r, nr, pr] = await Promise.all([fetch('offers-api.php'), fetch('networks-api.php').catch(() => null), fetch('plans-api.php').catch(() => null)]);
   _offersCache = await r.json();
   if (nr && nr.ok) _networkColorList = await nr.json().catch(() => []);
+  if (pr && pr.ok) {
+    const pj = await pr.json().catch(() => ({}));
+    _plans = pj.plans || [];
+    const sel = $('week-plan'), keep = sel.value;
+    const d = (s, add) => { const [y, m, dd] = s.split('-').map(Number); return new Date(y, m - 1, dd + (add || 0)).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); };
+    sel.innerHTML = sel.options[0].outerHTML + _plans.map(p =>
+      `<option value="${esc(p.id)}">${esc(p.name)} · ${d(p.weekStart)} – ${d(p.weekStart, 6)}${p.weekStart === pj.currentWeek ? ' (this week)' : p.weekStart > pj.currentWeek ? ' (upcoming)' : ''}</option>`).join('');
+    sel.value = keep;
+  }
   render();
+}
+
+// Week filter: only offers whose network runs (Active or Pending) in the chosen plan,
+// starred the way that plan stars them. Stars in this view are the plan's, not live.
+function selectedPlan() { const el = $('week-plan'); return (el && _plans.find(p => p.id === el.value)) || null; }
+function viewOffers() {
+  const plan = selectedPlan();
+  if (!plan) return _offersCache;
+  return _offersCache.filter(o => {
+    const n = findNetwork(o);
+    const st = n ? ((plan.networks || {})[n.id] || (n.enabled === false ? 'paused' : n.pendingSince ? 'pending' : 'active')) : 'paused';
+    return st !== 'paused';
+  }).map(o => Object.assign({}, o, { priority: (plan.offers || {})[o.id] !== undefined ? !!plan.offers[o.id] : !!o.priority }));
 }
 
 const STAR_ICON = '<span class="offers-section-star"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>';
 
 function render() {
   const grid = $('grid');
-  if (!_offersCache.length) {
-    grid.innerHTML = '<div class="grid-empty-msg">No offers yet — click "+ Add Offer" to create one.</div>';
+  const _all = viewOffers();
+  const plan = selectedPlan();
+  if (!_all.length) {
+    grid.innerHTML = '<div class="grid-empty-msg">' + (plan ? 'No offers run in ' + esc(plan.name) + '.' : 'No offers yet — click "+ Add Offer" to create one.') + '</div>';
     return;
   }
 
   const groupKey = o => (o.name || '').toLowerCase().trim() || o.id;
   const nameSize = new Map();
-  for (const o of _offersCache) nameSize.set(groupKey(o), (nameSize.get(groupKey(o)) || 0) + 1);
+  for (const o of _all) nameSize.set(groupKey(o), (nameSize.get(groupKey(o)) || 0) + 1);
 
   const ts = o => Date.parse(o.createdAt || o.updatedAt || '') || 0;
   const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
@@ -409,7 +438,7 @@ function render() {
   const monthAgoMs = todayMs - 29 * 86400000;
 
   const priorityOffers = [], bucketToday = [], bucketWeek = [], bucketMonth = [], bucketOlder = [];
-  for (const o of _offersCache) {
+  for (const o of _all) {
     if (o.priority) { priorityOffers.push(o); continue; }
     const t = ts(o);
     if (t >= todayMs) bucketToday.push(o);
@@ -443,7 +472,7 @@ function render() {
     `;
   }
 
-  grid.innerHTML = ''
+  grid.innerHTML = (plan ? '<div class="plan-banner">Showing <b>' + esc(plan.name) + '</b>: offers whose network runs that week, with that week\'s stars. Change them on the <a href="plans.php">Plans</a> page.</div>' : '')
     + renderSection('Priority', 'Starred offers', priorityOffers, { headClass: 'priority-section', icon: STAR_ICON })
     + renderSection('🟢 Today', 'Added today', bucketToday)
     + renderSection('🗓 This Week', 'Added in the last 7 days', bucketWeek)
