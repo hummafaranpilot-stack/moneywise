@@ -129,8 +129,9 @@ $ip = client_ip();
 $s2 = (string) ($_GET['s2'] ?? '');
 // Networks that take the click id under their own name: Everflow as sub2 on its tracking
 // links (e.g. Equantis) or subid2 on advertiser sites (e.g. Orbio World), and adbrt-style
-// trackers as aff_click_id. The postback returns it, and we match it against this value.
-foreach (['subid2', 'sub2', 'aff_click_id'] as $k) {
+// trackers as aff_click_id, apritrun as click_id. The postback returns it, and we match
+// it against this value.
+foreach (['subid2', 'sub2', 'aff_click_id', 'click_id'] as $k) {
     if ($s2 === '' || $s2[0] === '{') $s2 = (string) ($_GET[$k] ?? $s2);
 }
 // Params we add or overwrite on the way to the destination.
