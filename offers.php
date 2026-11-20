@@ -411,7 +411,8 @@ async function loadOffers() {
 function selectedPlan() { const el = $('week-plan'); return (el && _plans.find(p => p.id === el.value)) || null; }
 function viewOffers() {
   const plan = selectedPlan();
-  if (!plan) return _offersCache;
+  // Offers of a fully disabled (paused) network are hidden; Active and Pending ones show.
+  if (!plan) return _offersCache.filter(o => { const n = findNetwork(o); return !n || n.enabled !== false; });
   return _offersCache.filter(o => {
     const n = findNetwork(o);
     const st = n ? ((plan.networks || {})[n.id] || (n.enabled === false ? 'paused' : n.pendingSince ? 'pending' : 'active')) : 'paused';
