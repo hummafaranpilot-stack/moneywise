@@ -201,6 +201,7 @@ no_cache_headers();
         <option value="moneywise2026.com">moneywise2026.com</option>
         <option value="mindframemedia.in">mindframemedia.in</option>
         <option value="risingmax.net">risingmax.net</option>
+        <option value="trk.supplynutraplus.com">trk.supplynutraplus.com</option>
         <option value="direct">Direct (no domain, use the destination link as is)</option>
       </select>
     </div>
