@@ -148,7 +148,19 @@ no_cache_headers();
     <div class="row-2">
       <div class="field">
         <label class="field-label" for="nw-terms">Payment Terms</label>
-        <input id="nw-terms" type="text" placeholder="e.g. Weekly Net-0">
+        <select id="nw-terms">
+          <option value="">— select —</option>
+          <option value="Weekly Net-0">Weekly Net-0</option>
+          <option value="Weekly Net-1">Weekly Net-1</option>
+          <option value="Weekly Net-2">Weekly Net-2</option>
+          <option value="Weekly Net-3">Weekly Net-3</option>
+          <option value="Weekly Net-4">Weekly Net-4</option>
+          <option value="Weekly Net-5">Weekly Net-5</option>
+          <option value="Weekly Net-6">Weekly Net-6</option>
+          <option value="Monthly Net-7">Monthly Net-7</option>
+          <option value="Monthly Net-15">Monthly Net-15</option>
+          <option value="Monthly Net-30">Monthly Net-30</option>
+        </select>
       </div>
       <div class="field">
         <label class="field-label" for="nw-payout">Min Payout / Threshold</label>
@@ -356,7 +368,13 @@ function openNetworkModal(n) {
   $('network-modal-title').textContent = n ? 'Edit Network' : 'Add Network';
   $('nw-name').value = n ? (n.name || '') : '';
   $('nw-identity').value = n ? (n.identity || '') : '';
-  $('nw-terms').value = n ? (n.paymentTerms || '') : '';
+  // Older free-text terms (e.g. "Weekly Net-4 (Thursday)") stay selectable instead of being lost.
+  const terms = $('nw-terms'), pt = (n && n.paymentTerms) || '';
+  terms.querySelectorAll('option.legacy').forEach(o => o.remove());
+  if (pt && ![...terms.options].some(o => o.value === pt)) {
+    const opt = document.createElement('option'); opt.value = pt; opt.textContent = pt; opt.className = 'legacy'; terms.appendChild(opt);
+  }
+  terms.value = pt;
   $('nw-payout').value = n ? (n.minPayout || '') : '';
   $('nw-email').value = n ? (n.email || '') : '';
   // Keep an older free-text value selectable instead of silently dropping it.
