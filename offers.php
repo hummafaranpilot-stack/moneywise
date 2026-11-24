@@ -563,6 +563,7 @@ function renderCard(o, groupBadge) {
         </div>
         <div class="ofc-actions">
           <button onclick="showMoneyWiseLink('${esc(o.id)}')" title="View MoneyWise Link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+          <button onclick="cloneOffer('${esc(o.id)}')" title="Clone offer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
           <button onclick="editOffer('${esc(o.id)}')" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="del" onclick="deleteOffer('${esc(o.id)}')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
         </div>
@@ -591,13 +592,14 @@ function renderCard(o, groupBadge) {
   `;
 }
 
-function openOfferModal(offer) {
-  _editingOfferId = offer ? offer.id : null;
-  $('offer-modal-title').textContent = offer ? 'Edit Offer' : 'Add Offer';
+// clone: open as a new offer pre-filled from `offer`, with a fresh Unique ID.
+function openOfferModal(offer, clone) {
+  _editingOfferId = offer && !clone ? offer.id : null;
+  $('offer-modal-title').textContent = clone ? 'Clone Offer' : offer ? 'Edit Offer' : 'Add Offer';
   _populateOfferNetworkPicker(offer && offer.network, offer && offer.account);
   $('of-name').value = offer ? (offer.name || '') : '';
-  $('of-id').value = offer ? (offer.id || '') : '';
-  $('of-id').readOnly = !!offer;
+  $('of-id').value = offer ? (clone ? unusedOfferId(offer.id) : (offer.id || '')) : '';
+  $('of-id').readOnly = !!offer && !clone;
   $('of-domain').value = offerDomain(offer);
   $('of-link').value = offer ? (offer.link || '') : '';
   $('of-network').value = offer ? (offer.network || '') : '';
@@ -610,11 +612,25 @@ function openOfferModal(offer) {
   $('of-account').value = offer ? (offer.account || '') : '';
   $('of-account-email').value = offer ? (offer.accountEmail || '') : '';
   $('of-account-telegram').value = offer ? (offer.accountTelegram || '') : '';
-  const pl = (offer && offer.prelander) || '';
+  // A clone has no pre-lander page of its own yet, so it starts as pending.
+  const pl = (offer && offer.prelander) ? (clone ? 'needed' : offer.prelander) : '';
   $('of-prelander').checked = !!pl;
   setPrelanderStatus(pl === 'live' ? 'live' : 'needed');
   onPrelanderToggle();
   $('offer-modal').classList.add('open');
+  if (clone) { $('of-id').focus(); $('of-id').select(); }
+}
+
+function unusedOfferId(base) {
+  const taken = new Set(_offersCache.map(o => o.id));
+  let i = 2;
+  while (taken.has(base + '_' + i)) i++;
+  return base + '_' + i;
+}
+
+function cloneOffer(id) {
+  const o = _offersCache.find(x => x.id === id);
+  if (o) openOfferModal(o, true);
 }
 
 function closeOfferModal() { $('offer-modal').classList.remove('open'); _editingOfferId = null; }
