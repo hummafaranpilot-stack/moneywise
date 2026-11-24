@@ -290,6 +290,7 @@ function plannedState(n, plan) { const s = (plan.networks || {})[n.id]; return s
 const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
 const FB_ICON = '<svg class="meta-icon fb" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#1877F2"/><path fill="#fff" d="M13.4 19v-6h2l.3-2.4h-2.3V9.1c0-.7.2-1.2 1.2-1.2h1.2V5.8c-.2 0-1-.1-1.8-.1-1.8 0-3 1.1-3 3.1v1.8h-2V13h2v6h2.4z"/></svg>';
 const TRACKER_ICON = '<svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+const CLONE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 const DEL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
 
 const METHOD_COLORS = { wire: ['#eff6ff', '#1d4ed8', '#bfdbfe'], ach: ['#f5f3ff', '#6d28d9', '#ddd6fe'], usdt: ['#ecfdf5', '#047857', '#a7f3d0'] };
@@ -357,15 +358,17 @@ function render() {
         <td class="notes">${n.notes ? esc(n.notes).replace(/\n/g, '<br>') : '<span class="muted">—</span>'}</td>
         <td class="keep"><div class="actions">
           <button onclick="editNetwork('${esc(n.id)}')" title="Edit">${EDIT_ICON}</button>
+          <button onclick="cloneNetwork('${esc(n.id)}')" title="Clone with another identity">${CLONE_ICON}</button>
           <button class="del" onclick="deleteNetwork('${esc(n.id)}')" title="Delete">${DEL_ICON}</button>
         </div></td>
       </tr>`;
   }).join('');
 }
 
-function openNetworkModal(n) {
-  _editingId = n ? n.id : null;
-  $('network-modal-title').textContent = n ? 'Edit Network' : 'Add Network';
+// clone: open as a new network pre-filled from n; only the identity starts empty.
+function openNetworkModal(n, clone) {
+  _editingId = n && !clone ? n.id : null;
+  $('network-modal-title').textContent = clone ? 'Clone Network' : n ? 'Edit Network' : 'Add Network';
   $('nw-name').value = n ? (n.name || '') : '';
   $('nw-identity').value = n ? (n.identity || '') : '';
   // Older free-text terms (e.g. "Weekly Net-4 (Thursday)") stay selectable instead of being lost.
@@ -386,7 +389,8 @@ function openNetworkModal(n) {
   sel.value = pm;
   $('nw-fb-page').value = n ? (n.fbPage || '') : '';
   // New network: leave the color for the server to pick an unused one, unless the user changes it.
-  $('nw-color').value = (n && n.color) || '#94a3b8';
+  // A clone gets its own new color from the server, like any new network.
+  $('nw-color').value = (n && !clone && n.color) || '#94a3b8';
   $('nw-color').dataset.touched = '';
   $('nw-color').oninput = () => { $('nw-color').dataset.touched = '1'; };
   $('nw-tracker-domain').value = n ? (n.trackerDomain || '') : '';
@@ -394,8 +398,9 @@ function openNetworkModal(n) {
   $('nw-pending-since').value = (n && n.pendingSince) || todayYmd();
   onStateChange();
   $('nw-notes').value = n ? (n.notes || '') : '';
+  if (clone) $('nw-identity').value = '';
   $('network-modal').classList.add('open');
-  $('nw-name').focus();
+  (clone ? $('nw-identity') : $('nw-name')).focus();
 }
 
 function onStateChange() {
@@ -407,6 +412,9 @@ function closeNetworkModal() { $('network-modal').classList.remove('open'); _edi
 async function submitNetworkForm() {
   const name = $('nw-name').value.trim();
   if (!name) { alert('Network name required'); return; }
+  if ($('network-modal-title').textContent === 'Clone Network' && !$('nw-identity').value.trim()) {
+    alert('Enter the account holder identity for the clone'); $('nw-identity').focus(); return;
+  }
   const payload = {
     _action: _editingId ? 'update' : 'create',
     id: _editingId,
@@ -428,6 +436,11 @@ async function submitNetworkForm() {
     closeNetworkModal();
     await loadNetworks();
   } catch (e) { alert('Save failed: ' + e.message); }
+}
+
+function cloneNetwork(id) {
+  const n = _networks.find(x => x.id === id);
+  if (n) openNetworkModal(n, true);
 }
 
 function editNetwork(id) {
