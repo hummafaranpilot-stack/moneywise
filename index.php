@@ -160,6 +160,14 @@ if ($offer && strtolower(trim($offer['network'] ?? '')) === 'mobidea') {
     }
 }
 
+// Only reviril_adbrt: a visitor who lands with just fbclid (no aff_click_id) gets the
+// standard parameters filled in. sub_id2 (placement) is left out on purpose.
+if ($offerId === 'reviril_adbrt' && real_param('aff_click_id') === '' && real_param('fbclid') !== '') {
+    $forward['aff_click_id'] = $s2 = real_param('fbclid');
+    if (real_param('sub_id1') === '') $forward['sub_id1'] = 'Reviril_US_Purchase_01';
+    if (real_param('sub_id3') === '') $forward['sub_id3'] = 'RF_SA_US_934831';
+}
+
 if (!$dest) {
     append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country' => null, 'region' => null, 'city' => null, 'zip' => null, 'valid' => false, 'redirected' => false, 'reason' => 'offer-not-found', 's2' => $s2]);
     http_response_code(404);
