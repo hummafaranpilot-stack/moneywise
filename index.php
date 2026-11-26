@@ -245,7 +245,18 @@ append_click(['ts' => gmdate('c'), 'offerId' => $offerId, 'ip' => $ip, 'country'
 header('Referrer-Policy: origin');
 header('Content-Type: text/html');
 if ($showPrelander) {
-    echo str_replace('{{CTA}}', esc($finalUrl), file_get_contents($prelanderFile));
+    $html = str_replace('{{CTA}}', esc($finalUrl), file_get_contents($prelanderFile));
+    // When we filled parameters in (e.g. reviril_adbrt from just fbclid), show them in the
+    // address bar too, without reloading: same page URL, query = what came in + what we added.
+    if ($forward) {
+        $visible = array_merge($_GET, $forward);
+        unset($visible['offer']);
+        $path = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
+        $visibleUrl = $path . '?' . http_build_query($visible);
+        $script = '<script>try{history.replaceState(null,"",' . json_encode($visibleUrl, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ')}catch(e){}</script>';
+        $html = preg_replace('~</head>~i', $script . '</head>', $html, 1);
+    }
+    echo $html;
     exit;
 }
 render_redirecting($finalUrl);
