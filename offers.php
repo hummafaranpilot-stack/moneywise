@@ -33,6 +33,17 @@ no_cache_headers();
   @media (max-width: 800px)  { .offers-cards-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 520px)  { .offers-cards-grid { grid-template-columns: 1fr; } }
 
+  /* Drag and drop: every grid cell is a slot; a card can be dropped into any slot,
+     empty ones included, and stays there. Empty slots show as dotted boxes while dragging. */
+  .slot { min-width: 0; border-radius: 14px; }
+  .slot-empty { min-height: 320px; }
+  .slot-extra { display: none; }
+  .offers-cards-grid.drag-active .slot-extra { display: block; }
+  .offers-cards-grid.drag-active .slot-empty { border: 2px dashed #cbd5e1; background: rgba(148,163,184,.06); }
+  .offers-cards-grid.drag-active .slot.drop-over { outline: 2px dashed #16a34a; outline-offset: 3px; background: rgba(22,163,74,.06); }
+  .offer-card[draggable="true"] { cursor: grab; }
+  .slot.dragging .offer-card { opacity: .35; }
+
   /* Offer card — same visual system as the Muneeb Data tool's Offers tab */
   .offer-card {
     position: relative; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
@@ -473,12 +484,24 @@ function render() {
     const netKey = o => (o.network || '').toLowerCase().trim();
     const byNetwork = (a, b) => (!netKey(a) - !netKey(b)) || netKey(a).localeCompare(netKey(b));
     const sorted = [...items].sort((a, b) => byNetwork(a, b) || ts(b) - ts(a));
-    const cards = sorted.map(o => {
-      const gk = groupKey(o);
-      const total = nameSize.get(gk) || 1;
+    // Cards keep the slot they were dragged to; the rest fill the first free slots.
+    const placed = [], loose = [];
+    for (const o of sorted) {
+      const s = Number.isInteger(o.slot) ? o.slot : -1;
+      if (s >= 0 && !placed[s]) placed[s] = o; else loose.push(o);
+    }
+    for (const o of loose) { let i = 0; while (placed[i]) i++; placed[i] = o; }
+    const cells = [];
+    for (let i = 0; i < placed.length; i++) {
+      const o = placed[i];
+      if (!o) { cells.push('<div class="slot slot-empty" data-slot="' + i + '"></div>'); continue; }
+      const total = nameSize.get(groupKey(o)) || 1;
       const badge = total > 1 ? '<span class="ofc-group-badge">×' + total + '</span>' : '';
-      return renderCard(o, badge);
-    }).join('');
+      cells.push('<div class="slot" data-slot="' + i + '" data-id="' + esc(o.id) + '">' + renderCard(o, badge) + '</div>');
+    }
+    // One extra row of empty slots, shown only while dragging.
+    for (let k = 0; k < 5; k++) cells.push('<div class="slot slot-empty slot-extra" data-slot="' + (placed.length + k) + '"></div>');
+    const cards = cells.join('');
     return `
       <div class="offers-section${opts.headClass ? ' ' + opts.headClass : ''}">
         <div class="offers-section-head">
@@ -486,7 +509,7 @@ function render() {
           <div><div class="offers-section-title">${esc(title)}</div><div class="offers-section-sub">${esc(subtitle)}</div></div>
           <span class="offers-section-count">${items.length}</span>
         </div>
-        <div class="offers-cards-grid">${cards}</div>
+        <div class="offers-cards-grid" data-section="${esc(title)}">${cards}</div>
       </div>
     `;
   }
@@ -547,7 +570,7 @@ function renderCard(o, groupBadge) {
   const accent = networkColor(o);
   const disabled = o.enabled === false;
   return `
-    <div class="offer-card${disabled ? ' offer-disabled' : ''}" style="border-top:4px solid ${accent};">
+    <div class="offer-card${disabled ? ' offer-disabled' : ''}" draggable="true" style="border-top:4px solid ${accent};">
       ${ribbonRow(o, accent)}
       <div class="ofc-head">
         <div class="ofc-logo" style="background:${accent};">${esc(initials)}</div>
@@ -760,6 +783,56 @@ function _flashCopyIcon(btn) {
   btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' + (mark ? mark.outerHTML : '');
   setTimeout(() => { btn.innerHTML = original; }, 1200);
 }
+
+// ---- Drag and drop cards between slots of the same section ----
+let _drag = null; // { id, slot, grid }
+(function initDrag() {
+  const root = $('grid');
+  const slotOf = el => el && el.closest ? el.closest('.slot') : null;
+  root.addEventListener('dragstart', e => {
+    const card = e.target.closest && e.target.closest('.offer-card');
+    const slot = slotOf(card);
+    if (!card || !slot) return;
+    _drag = { id: slot.dataset.id, slot: +slot.dataset.slot, grid: slot.parentElement };
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', _drag.id); } catch (_) {}
+    slot.classList.add('dragging');
+    _drag.grid.classList.add('drag-active');
+  });
+  root.addEventListener('dragover', e => {
+    const slot = slotOf(e.target);
+    if (!_drag || !slot || slot.parentElement !== _drag.grid) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    _drag.grid.querySelectorAll('.drop-over').forEach(x => { if (x !== slot) x.classList.remove('drop-over'); });
+    slot.classList.add('drop-over');
+  });
+  root.addEventListener('drop', async e => {
+    const slot = slotOf(e.target);
+    if (!_drag || !slot || slot.parentElement !== _drag.grid) return;
+    e.preventDefault();
+    const to = +slot.dataset.slot, from = _drag.slot;
+    const otherId = slot.dataset.id || null;
+    const change = { [_drag.id]: to };
+    if (otherId && otherId !== _drag.id) change[otherId] = from; // occupied: the two cards swap
+    endDrag();
+    if (to === from) return;
+    // Pin every card in this section to its current slot, so later changes don't shuffle them.
+    slot.parentElement.querySelectorAll('.slot[data-id]').forEach(s => { if (!(s.dataset.id in change)) change[s.dataset.id] = +s.dataset.slot; });
+    Object.entries(change).forEach(([id, sl]) => { const o = _offersCache.find(x => x.id === id); if (o) o.slot = sl; });
+    render();
+    try {
+      const r = await fetch('offers-api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _action: 'reorder', slots: change }) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+    } catch (err) { alert('Could not save the new position: ' + err.message); loadOffers(); }
+  });
+  function endDrag() {
+    document.querySelectorAll('.drag-active').forEach(x => x.classList.remove('drag-active'));
+    document.querySelectorAll('.drop-over, .slot.dragging').forEach(x => x.classList.remove('drop-over', 'dragging'));
+    _drag = null;
+  }
+  root.addEventListener('dragend', endDrag);
+})();
 
 loadOffers();
 </script>

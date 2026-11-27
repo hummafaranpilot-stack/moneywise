@@ -90,6 +90,21 @@ if ($action === 'update') {
     exit;
 }
 
+// Card positions on the Offers page (drag and drop): { slots: { offerId: slotIndex|null } }.
+if ($action === 'reorder') {
+    $slots = is_array($body['slots'] ?? null) ? $body['slots'] : [];
+    foreach ($offers as &$o) {
+        if (!array_key_exists($o['id'], $slots)) continue;
+        $v = $slots[$o['id']];
+        if ($v === null) unset($o['slot']);
+        else $o['slot'] = max(0, (int) $v);
+    }
+    unset($o);
+    db_write('offers.json', $offers);
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
 if ($action === 'delete') {
     $id = $body['id'] ?? '';
     $offers = array_values(array_filter($offers, fn($o) => $o['id'] !== $id));
